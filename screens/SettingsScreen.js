@@ -80,8 +80,8 @@ export default function SettingsScreen() {
 
   const showImageMoodOptions = () => {
     Alert.alert(
-      'Image Mood',
-      'Choose the style for vocabulary images (Midjourney-generated)',
+      'Learning Mode',
+      'Choose the style for vocabulary learning experience',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -89,7 +89,11 @@ export default function SettingsScreen() {
           onPress: () => handleSettingChange('imageMood', 'humorous'),
           style: settings.imageMood === 'humorous' ? 'default' : 'default',
         },
-        // Future options can be added here
+        {
+          text: 'Formal',
+          onPress: () => handleSettingChange('imageMood', 'formal'),
+          style: settings.imageMood === 'formal' ? 'default' : 'default',
+        },
       ]
     );
   };
@@ -129,9 +133,9 @@ export default function SettingsScreen() {
           
           <SettingRow
             icon="image-outline"
-            title="Image Mood"
-            subtitle="Style of images for vocabulary words"
-            value="Humorous"
+            title="Learning Mode"
+            subtitle="Style of images and examples for vocabulary words"
+            value={settings.imageMood === 'humorous' ? 'Humorous' : 'Formal'}
             onPress={showImageMoodOptions}
           />
 

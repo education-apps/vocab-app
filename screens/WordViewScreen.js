@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { getVocabularyWords, updateWordStatus, getCurrentWordIndex, saveCurrentWordIndex } from '../utils/storage';
+import { Audio } from 'expo-av';
+import { getVocabularyWords, updateWordStatus, getCurrentWordIndex, saveCurrentWordIndex, getSettings } from '../utils/storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -21,10 +22,36 @@ export default function WordViewScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [currentWord, setCurrentWord] = useState(null);
   const [showDefinition, setShowDefinition] = useState(false);
+  const [settings, setSettings] = useState({ imageMood: 'humorous', vocabularySet: 'general' });
+  const [currentMode, setCurrentMode] = useState('humorous');
+  const [sound, setSound] = useState(null);
 
   useEffect(() => {
-    loadWords();
+    const loadData = async () => {
+      // Load settings first to get the current mode
+      await loadSettings();
+      // Then load words
+      await loadWords();
+    };
+    
+    loadData();
+    
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
   }, []);
+
+  // Listen for navigation focus to reload settings when returning from Settings
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', async () => {
+      console.log('WordView screen focused, reloading settings...');
+      await loadSettings();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   useEffect(() => {
     if (words.length > 0) {
@@ -53,6 +80,34 @@ export default function WordViewScreen({ navigation }) {
     } catch (error) {
       console.error('Error loading words:', error);
       setLoading(false);
+    }
+  };
+
+  const loadSettings = async () => {
+    try {
+      const userSettings = await getSettings();
+      setSettings(userSettings);
+      setCurrentMode(userSettings.imageMood);
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
+
+  const playAudio = async (audioPath) => {
+    try {
+      // For MVP, we'll show an alert since audio files don't exist yet
+      Alert.alert('Audio Feature', `Playing audio: ${audioPath}\n\nThis feature will play actual audio files when they are available.`);
+      
+      // Future implementation:
+      // if (sound) {
+      //   await sound.unloadAsync();
+      // }
+      // const { sound: newSound } = await Audio.Sound.createAsync({ uri: audioPath });
+      // setSound(newSound);
+      // await newSound.playAsync();
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      Alert.alert('Audio Error', 'Could not play audio file.');
     }
   };
 
@@ -121,6 +176,9 @@ export default function WordViewScreen({ navigation }) {
     );
   }
 
+  // Get mode-specific data
+  const modeData = currentWord.modes && currentWord.modes[currentMode] ? currentWord.modes[currentMode] : null;
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
@@ -143,24 +201,45 @@ export default function WordViewScreen({ navigation }) {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Mode Indicator */}
+          <View style={styles.modeIndicator}>
+            <Ionicons 
+              name={currentMode === 'humorous' ? 'happy' : 'school'} 
+              size={20} 
+              color="#6366f1" 
+            />
+            <Text style={styles.modeText}>
+              {currentMode === 'humorous' ? 'Humorous Mode' : 'Formal Mode'}
+            </Text>
+          </View>
+
           {/* Word Card */}
           <View style={styles.wordCard}>
             {/* Word Header */}
             <View style={styles.wordHeader}>
-              <Text style={styles.word}>{currentWord.word}</Text>
+              <View style={styles.wordTitleContainer}>
+                <Text style={styles.word}>{currentWord.word}</Text>
+                <TouchableOpacity 
+                  style={styles.audioButton}
+                  onPress={() => playAudio(currentWord.pronunciation_audio)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="volume-high" size={24} color="#6366f1" />
+                </TouchableOpacity>
+              </View>
               <View style={styles.partOfSpeechContainer}>
                 <Text style={styles.partOfSpeech}>{currentWord.partOfSpeech}</Text>
               </View>
             </View>
 
-            {/* Image Placeholder */}
+            {/* Image Container */}
             <View style={styles.imageContainer}>
               <Ionicons name="image" size={80} color="#94a3b8" />
               <Text style={styles.imagePlaceholder}>
-                Humorous Image Placeholder
+                {currentMode === 'humorous' ? 'Humorous' : 'Formal'} Image Placeholder
               </Text>
               <Text style={styles.imageNote}>
-                Midjourney-generated image for "{currentWord.word}"
+                {modeData ? `Image: ${modeData.image}` : `Midjourney-generated ${currentMode} image for "${currentWord.word}"`}
               </Text>
             </View>
 
@@ -189,14 +268,36 @@ export default function WordViewScreen({ navigation }) {
               <View style={styles.definitionRevealedSection}>
                 {/* Definition */}
                 <View style={styles.definitionSection}>
-                  <Text style={styles.sectionTitle}>Definition</Text>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Definition</Text>
+                    <TouchableOpacity 
+                      style={styles.audioButtonSmall}
+                      onPress={() => playAudio(currentWord.definition_audio)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="volume-high" size={18} color="#6366f1" />
+                    </TouchableOpacity>
+                  </View>
                   <Text style={styles.definition}>{currentWord.definition}</Text>
                 </View>
 
-                {/* Example */}
+                {/* Example Sentence */}
                 <View style={styles.exampleSection}>
-                  <Text style={styles.sectionTitle}>Example</Text>
-                  <Text style={styles.example}>"{currentWord.example}"</Text>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Example ({currentMode})</Text>
+                    {modeData && (
+                      <TouchableOpacity 
+                        style={styles.audioButtonSmall}
+                        onPress={() => playAudio(modeData.sentence_audio)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="volume-high" size={18} color="#6366f1" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <Text style={styles.example}>
+                    "{modeData ? modeData.sentence : 'No example available for this mode'}"
+                  </Text>
                 </View>
               </View>
             )}
@@ -291,6 +392,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 30,
   },
+  modeIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginTop: 16,
+    alignSelf: 'center',
+  },
+  modeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6366f1',
+    marginLeft: 6,
+  },
   wordCard: {
     backgroundColor: 'white',
     borderRadius: 20,
@@ -306,12 +424,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
+  wordTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   word: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#1f2937',
-    marginBottom: 8,
     textAlign: 'center',
+    marginRight: 12,
+  },
+  audioButton: {
+    padding: 8,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 20,
+  },
+  audioButtonSmall: {
+    padding: 6,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 15,
+    marginLeft: 8,
   },
   partOfSpeechContainer: {
     backgroundColor: '#6366f1',
@@ -342,6 +476,8 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     marginTop: 4,
     fontStyle: 'italic',
+    textAlign: 'center',
+    paddingHorizontal: 16,
   },
   revealSection: {
     alignItems: 'center',
@@ -386,11 +522,15 @@ const styles = StyleSheet.create({
   exampleSection: {
     marginBottom: 20,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#374151',
-    marginBottom: 8,
   },
   definition: {
     fontSize: 16,

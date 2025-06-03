@@ -12,11 +12,30 @@ const STORAGE_KEYS = {
 export const initializeVocabularyData = async () => {
   try {
     const existingData = await AsyncStorage.getItem(STORAGE_KEYS.VOCABULARY_DATA);
-    if (!existingData) {
+    
+    // Check if we need to update the data structure
+    if (existingData) {
+      const currentData = JSON.parse(existingData);
+      // Check if the first word has the new modes structure
+      if (!currentData[0] || !currentData[0].modes) {
+        console.log('Updating vocabulary data to new structure with modes...');
+        await AsyncStorage.setItem(STORAGE_KEYS.VOCABULARY_DATA, JSON.stringify(vocabularyWords));
+      }
+    } else {
       await AsyncStorage.setItem(STORAGE_KEYS.VOCABULARY_DATA, JSON.stringify(vocabularyWords));
     }
   } catch (error) {
     console.error('Error initializing vocabulary data:', error);
+  }
+};
+
+// Force update vocabulary data to latest structure (for development)
+export const forceUpdateVocabularyData = async () => {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.VOCABULARY_DATA, JSON.stringify(vocabularyWords));
+    console.log('Vocabulary data forcefully updated to latest structure');
+  } catch (error) {
+    console.error('Error force updating vocabulary data:', error);
   }
 };
 
