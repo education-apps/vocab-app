@@ -12,7 +12,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import { getVocabularyWords, updateWordStatus, getCurrentWordIndex, saveCurrentWordIndex, getSettings } from '../utils/storage';
+import { getVocabularyWords, updateWordStatus, getCurrentWordIndex, saveCurrentWordIndex, getSettings, processWordReview } from '../utils/storage';
+import { Grade } from '../utils/fsrs';
 
 const { width, height } = Dimensions.get('window');
 
@@ -111,11 +112,21 @@ export default function WordViewScreen({ navigation }) {
     }
   };
 
-  const handleWordAction = async (action) => {
+  const handleShowDefinition = () => {
+    setShowDefinition(true);
+  };
+
+  // FSRS grading function (placeholder for now)
+  const handleFsrsGrade = async (grade) => {
     if (!currentWord) return;
 
     try {
-      const newStatus = action === 'know' ? 'known' : 'review';
+      // TODO: Replace with actual FSRS review processing when algorithm is implemented
+      console.log(`FSRS Grade: ${grade} for word: ${currentWord.word}`);
+      
+      // For now, use the existing word status update logic
+      // In the future, this will call processWordReview(currentWord.id, grade)
+      const newStatus = grade === Grade.FORGOT ? 'review' : grade >= Grade.GOOD ? 'known' : 'review';
       await updateWordStatus(currentWord.id, newStatus);
       
       // Update local state
@@ -145,13 +156,9 @@ export default function WordViewScreen({ navigation }) {
         );
       }
     } catch (error) {
-      console.error('Error updating word status:', error);
-      Alert.alert('Error', 'Failed to update word status. Please try again.');
+      console.error('Error processing FSRS grade:', error);
+      Alert.alert('Error', 'Failed to record review. Please try again.');
     }
-  };
-
-  const handleShowDefinition = () => {
-    setShowDefinition(true);
   };
 
   if (loading) {
@@ -321,23 +328,46 @@ export default function WordViewScreen({ navigation }) {
           {/* Action Buttons - Only show if definition is revealed */}
           {showDefinition && (
             <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.reviewButton]}
-                onPress={() => handleWordAction('review')}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="refresh-circle" size={24} color="white" />
-                <Text style={styles.actionButtonText}>🔁 Review Later</Text>
-              </TouchableOpacity>
+              {/* FSRS Grading Buttons */}
+              <Text style={styles.gradingTitle}>How well did you know this word?</Text>
+              
+              <View style={styles.gradingButtons}>
+                <TouchableOpacity
+                  style={[styles.gradeButton, styles.forgotButton]}
+                  onPress={() => handleFsrsGrade(Grade.FORGOT)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.gradeButtonText}>😟 Forgot</Text>
+                  <Text style={styles.gradeButtonSubtext}>~10 min</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.actionButton, styles.knowButton]}
-                onPress={() => handleWordAction('know')}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="checkmark-circle" size={24} color="white" />
-                <Text style={styles.actionButtonText}>✅ I Know This</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.gradeButton, styles.hardButton]}
+                  onPress={() => handleFsrsGrade(Grade.HARD)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.gradeButtonText}>😅 Hard</Text>
+                  <Text style={styles.gradeButtonSubtext}>~6 hours</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.gradeButton, styles.goodButton]}
+                  onPress={() => handleFsrsGrade(Grade.GOOD)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.gradeButtonText}>😊 Good</Text>
+                  <Text style={styles.gradeButtonSubtext}>~1 day</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.gradeButton, styles.easyButton]}
+                  onPress={() => handleFsrsGrade(Grade.EASY)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.gradeButtonText}>😎 Easy</Text>
+                  <Text style={styles.gradeButtonSubtext}>~4 days</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
         </ScrollView>
@@ -567,34 +597,58 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginHorizontal: 4,
     marginBottom: 20,
   },
-  actionButton: {
-    flex: 0.48,
+  gradingTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#374151',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  gradingButtons: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  gradeButton: {
+    flex: 0.23,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 16,
-    elevation: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    minHeight: 70,
   },
-  reviewButton: {
+  forgotButton: {
+    backgroundColor: '#ef4444',
+  },
+  hardButton: {
     backgroundColor: '#f59e0b',
   },
-  knowButton: {
+  goodButton: {
     backgroundColor: '#10b981',
   },
-  actionButtonText: {
-    fontSize: 16,
+  easyButton: {
+    backgroundColor: '#3b82f6',
+  },
+  gradeButtonText: {
+    fontSize: 14,
     fontWeight: '600',
     color: 'white',
-    marginLeft: 8,
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  gradeButtonSubtext: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    lineHeight: 12,
   },
 }); 
