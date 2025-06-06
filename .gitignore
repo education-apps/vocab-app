@@ -37,3 +37,5 @@ yarn-error.*
 *.tsbuildinfo
 
 .cursor
+
+data/isee_vocabulary.json

@@ -1,108 +1,77 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { vocabularyWords } from '../data/vocabulary';
+import { initializeDatabase, checkVocabularyLoaded } from './database.js';
+import { loadVocabularyData, getWordById, getDueWords, getAllWords } from './vocabDatabase.js';
+import { updateFsrsData, getUserProgress, getRecentWords } from './fsrsDatabase.js';
+import { processReview } from './fsrs.js';
+
+/*
+ * DATA FLOW EXPLANATION:
+ * 
+ * 1. vocabulary.js contains static word definitions (source of truth)
+ * 2. On app startup, vocabulary.js data is loaded into SQLite database (one-time)
+ * 3. All user progress (FSRS data, review history) is stored in SQLite
+ * 4. App screens read from SQLite database (not vocabulary.js directly)
+ * 
+ * SQLite Tables:
+ * - vocabulary: word definitions, examples, audio paths
+ * - fsrs_data: learning progress, next review dates, difficulty
+ * - review_history: historical review data for analytics
+ */
 
 const STORAGE_KEYS = {
-  VOCABULARY_DATA: 'vocabulary_data',
-  USER_PROGRESS: 'user_progress',
   SETTINGS: 'settings',
-  CURRENT_WORD_INDEX: 'current_word_index',
 };
 
-// Initialize vocabulary data
+// Initialize vocabulary data using SQLite database
+// This loads vocabulary.js data into SQLite (one-time operation)
 export const initializeVocabularyData = async () => {
   try {
-    const existingData = await AsyncStorage.getItem(STORAGE_KEYS.VOCABULARY_DATA);
+    console.log('Initializing database...');
+    await initializeDatabase();
     
-    // Check if we need to update the data structure
-    if (existingData) {
-      const currentData = JSON.parse(existingData);
-      // Check if the first word has the new modes structure
-      if (!currentData[0] || !currentData[0].modes) {
-        console.log('Updating vocabulary data to new structure with modes...');
-        await AsyncStorage.setItem(STORAGE_KEYS.VOCABULARY_DATA, JSON.stringify(vocabularyWords));
-      }
+    console.log('Checking if vocabulary data is loaded...');
+    const isLoaded = await checkVocabularyLoaded();
+    
+    if (!isLoaded) {
+      console.log('Loading vocabulary data into database...');
+      await loadVocabularyData(); // Loads from vocabulary.js into SQLite
     } else {
-      await AsyncStorage.setItem(STORAGE_KEYS.VOCABULARY_DATA, JSON.stringify(vocabularyWords));
+      console.log('Vocabulary data already loaded');
     }
+    
+    console.log('App data initialized successfully');
   } catch (error) {
     console.error('Error initializing vocabulary data:', error);
-  }
-};
-
-// Force update vocabulary data to latest structure (for development)
-export const forceUpdateVocabularyData = async () => {
-  try {
-    await AsyncStorage.setItem(STORAGE_KEYS.VOCABULARY_DATA, JSON.stringify(vocabularyWords));
-    console.log('Vocabulary data forcefully updated to latest structure');
-  } catch (error) {
-    console.error('Error force updating vocabulary data:', error);
-  }
-};
-
-// Get all vocabulary words
-export const getVocabularyWords = async () => {
-  try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.VOCABULARY_DATA);
-    return data ? JSON.parse(data) : vocabularyWords;
-  } catch (error) {
-    console.error('Error getting vocabulary data:', error);
-    return vocabularyWords;
-  }
-};
-
-// Update a specific word's status
-export const updateWordStatus = async (wordId, newStatus) => {
-  try {
-    const words = await getVocabularyWords();
-    const updatedWords = words.map(word => 
-      word.id === wordId ? { ...word, status: newStatus } : word
-    );
-    await AsyncStorage.setItem(STORAGE_KEYS.VOCABULARY_DATA, JSON.stringify(updatedWords));
-    return updatedWords;
-  } catch (error) {
-    console.error('Error updating word status:', error);
     throw error;
   }
 };
 
-// Get user progress statistics
-export const getUserProgress = async () => {
+// Export database functions with consistent naming
+export { getUserProgress, getRecentWords };
+
+// Export getWordById from vocabDatabase
+export { getWordById } from './vocabDatabase.js';
+
+// Process FSRS review for a word (stores progress in database)
+export const processFsrsReview = async (wordId, grade) => {
   try {
-    const words = await getVocabularyWords();
-    const totalWords = words.length;
-    const knownWords = words.filter(word => word.status === 'known').length;
-    const reviewWords = words.filter(word => word.status === 'review').length;
-    const newWords = words.filter(word => word.status === 'new').length;
+    const word = await getWordById(wordId);
+    const reviewedWord = processReview(word, grade);
     
-    const accuracy = totalWords > 0 ? Math.round((knownWords / totalWords) * 100) : 0;
+    // Update FSRS data in database
+    await updateFsrsData(wordId, reviewedWord.fsrs);
     
-    return {
-      totalWords,
-      knownWords,
-      reviewWords,
-      newWords,
-      accuracy,
-      // Placeholder for spaced repetition data
-      dueToday: reviewWords,
-      dueTomorrow: 0,
-      dueThisWeek: reviewWords,
-    };
+    return reviewedWord;
   } catch (error) {
-    console.error('Error getting user progress:', error);
-    return {
-      totalWords: 0,
-      knownWords: 0,
-      reviewWords: 0,
-      newWords: 0,
-      accuracy: 0,
-      dueToday: 0,
-      dueTomorrow: 0,
-      dueThisWeek: 0,
-    };
+    console.error('Error processing FSRS review:', error);
+    throw error;
   }
 };
 
-// Get settings
+// Get words due for review (from database)
+export const getDueWordsForReview = getDueWords;
+
+// App settings (stored in AsyncStorage, not database)
 export const getSettings = async () => {
   try {
     const settings = await AsyncStorage.getItem(STORAGE_KEYS.SETTINGS);
@@ -129,40 +98,5 @@ export const updateSettings = async (newSettings) => {
   } catch (error) {
     console.error('Error updating settings:', error);
     throw error;
-  }
-};
-
-// Get recent words (last 5 words with status changes)
-export const getRecentWords = async () => {
-  try {
-    const words = await getVocabularyWords();
-    // For MVP, return words that are not 'new' status
-    const recentWords = words
-      .filter(word => word.status !== 'new')
-      .slice(-5);
-    return recentWords;
-  } catch (error) {
-    console.error('Error getting recent words:', error);
-    return [];
-  }
-};
-
-// Save current word index
-export const saveCurrentWordIndex = async (index) => {
-  try {
-    await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_WORD_INDEX, index.toString());
-  } catch (error) {
-    console.error('Error saving current word index:', error);
-  }
-};
-
-// Get current word index
-export const getCurrentWordIndex = async () => {
-  try {
-    const index = await AsyncStorage.getItem(STORAGE_KEYS.CURRENT_WORD_INDEX);
-    return index ? parseInt(index, 10) : 0;
-  } catch (error) {
-    console.error('Error getting current word index:', error);
-    return 0;
   }
 }; 

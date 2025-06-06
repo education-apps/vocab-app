@@ -20,18 +20,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/serendipity_pronunciation",
-    definition_audio: "path/to/audio/serendipity_definition",
-    status: "new", // "new", "known", "review"
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,           // S: time for retrievability to decay from 1 to 0.9
-      difficulty: null,          // D: how hard it is to recall (1-10)
-      lastReviewDate: null,      // when this card was last reviewed
-      nextReviewDate: null,      // when this card should next be reviewed
-      reviewCount: 0,            // number of times this card has been reviewed
-      lastGrade: null,           // last grade given (1-4: forgot, hard, good, easy)
-    }
+    definition_audio: "path/to/audio/serendipity_definition"
   },
   {
     id: 2,
@@ -53,18 +42,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/mellifluous_pronunciation",
-    definition_audio: "path/to/audio/mellifluous_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/mellifluous_definition"
   },
   {
     id: 3,
@@ -86,18 +64,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/ephemeral_pronunciation",
-    definition_audio: "path/to/audio/ephemeral_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/ephemeral_definition"
   },
   {
     id: 4,
@@ -119,18 +86,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/perspicacious_pronunciation",
-    definition_audio: "path/to/audio/perspicacious_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/perspicacious_definition"
   },
   {
     id: 5,
@@ -152,18 +108,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/ubiquitous_pronunciation",
-    definition_audio: "path/to/audio/ubiquitous_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/ubiquitous_definition"
   },
   {
     id: 6,
@@ -185,18 +130,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/cacophony_pronunciation",
-    definition_audio: "path/to/audio/cacophony_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/cacophony_definition"
   },
   {
     id: 7,
@@ -218,18 +152,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/sycophant_pronunciation",
-    definition_audio: "path/to/audio/sycophant_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/sycophant_definition"
   },
   {
     id: 8,
@@ -251,18 +174,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/quintessential_pronunciation",
-    definition_audio: "path/to/audio/quintessential_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/quintessential_definition"
   },
   {
     id: 9,
@@ -284,18 +196,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/conundrum_pronunciation",
-    definition_audio: "path/to/audio/conundrum_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/conundrum_definition"
   },
   {
     id: 10,
@@ -317,18 +218,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/ineffable_pronunciation",
-    definition_audio: "path/to/audio/ineffable_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/ineffable_definition"
   },
   {
     id: 11,
@@ -350,18 +240,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/vicarious_pronunciation",
-    definition_audio: "path/to/audio/vicarious_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/vicarious_definition"
   },
   {
     id: 12,
@@ -383,18 +262,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/magnanimous_pronunciation",
-    definition_audio: "path/to/audio/magnanimous_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/magnanimous_definition"
   },
   {
     id: 13,
@@ -416,18 +284,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/obfuscate_pronunciation",
-    definition_audio: "path/to/audio/obfuscate_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/obfuscate_definition"
   },
   {
     id: 14,
@@ -449,18 +306,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/ostentatious_pronunciation",
-    definition_audio: "path/to/audio/ostentatious_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/ostentatious_definition"
   },
   {
     id: 15,
@@ -482,18 +328,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/venerable_pronunciation",
-    definition_audio: "path/to/audio/venerable_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/venerable_definition"
   },
   {
     id: 16,
@@ -515,18 +350,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/copious_pronunciation",
-    definition_audio: "path/to/audio/copious_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/copious_definition"
   },
   {
     id: 17,
@@ -548,18 +372,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/recalcitrant_pronunciation",
-    definition_audio: "path/to/audio/recalcitrant_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/recalcitrant_definition"
   },
   {
     id: 18,
@@ -581,18 +394,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/panacea_pronunciation",
-    definition_audio: "path/to/audio/panacea_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/panacea_definition"
   },
   {
     id: 19,
@@ -614,18 +416,7 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/gregarious_pronunciation",
-    definition_audio: "path/to/audio/gregarious_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
+    definition_audio: "path/to/audio/gregarious_definition"
   },
   {
     id: 20,
@@ -647,19 +438,8 @@ export const vocabularyWords = [
     },
     
     pronunciation_audio: "path/to/audio/supercilious_pronunciation",
-    definition_audio: "path/to/audio/supercilious_definition",
-    status: "new",
-    
-    // FSRS spaced repetition data (placeholder)
-    fsrs: {
-      stability: null,
-      difficulty: null,
-      lastReviewDate: null,
-      nextReviewDate: null,
-      reviewCount: 0,
-      lastGrade: null,
-    }
-  },
+    definition_audio: "path/to/audio/supercilious_definition"
+  }
 ];
 
 export default vocabularyWords; 

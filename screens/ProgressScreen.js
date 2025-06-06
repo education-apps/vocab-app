@@ -15,13 +15,14 @@ import { getUserProgress, getRecentWords } from '../utils/storage';
 export default function ProgressScreen({ navigation }) {
   const [progress, setProgress] = useState({
     totalWords: 0,
-    knownWords: 0,
-    reviewWords: 0,
-    newWords: 0,
-    accuracy: 0,
     dueToday: 0,
     dueTomorrow: 0,
     dueThisWeek: 0,
+    reviewedWords: 0,
+    totalReviews: 0,
+    averageReviews: 0,
+    retentionRate: 0,
+    accuracy: 0,
   });
   const [recentWords, setRecentWords] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -55,25 +56,23 @@ export default function ProgressScreen({ navigation }) {
     setRefreshing(false);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'known':
-        return '#10b981';
-      case 'review':
-        return '#f59e0b';
-      default:
-        return '#6366f1';
+  const getGradeColor = (grade) => {
+    switch(grade) {
+      case 1: return '#ef4444'; // Forgot - Red
+      case 2: return '#f59e0b'; // Hard - Orange  
+      case 3: return '#10b981'; // Good - Green
+      case 4: return '#06b6d4'; // Easy - Blue
+      default: return '#6b7280'; // Unknown - Gray
     }
   };
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'known':
-        return '✅ Known';
-      case 'review':
-        return '🔄 Review';
-      default:
-        return '📝 New';
+  const getGradeText = (grade) => {
+    switch(grade) {
+      case 1: return 'Forgot';
+      case 2: return 'Hard';
+      case 3: return 'Good'; 
+      case 4: return 'Easy';
+      default: return 'Not reviewed';
     }
   };
 
@@ -112,7 +111,7 @@ export default function ProgressScreen({ navigation }) {
               <View style={styles.statIconContainer}>
                 <Ionicons name="checkmark-circle" size={32} color="#10b981" />
               </View>
-              <Text style={styles.statNumber}>{progress.knownWords}</Text>
+              <Text style={styles.statNumber}>{progress.reviewedWords}</Text>
               <Text style={styles.statLabel}>Words Learned</Text>
             </View>
 
@@ -128,8 +127,8 @@ export default function ProgressScreen({ navigation }) {
               <View style={styles.statIconContainer}>
                 <Ionicons name="refresh-circle" size={32} color="#f59e0b" />
               </View>
-              <Text style={styles.statNumber}>{progress.reviewWords}</Text>
-              <Text style={styles.statLabel}>Need Review</Text>
+              <Text style={styles.statNumber}>{progress.dueToday}</Text>
+              <Text style={styles.statLabel}>Due Today</Text>
             </View>
           </View>
         </View>
@@ -142,25 +141,25 @@ export default function ProgressScreen({ navigation }) {
             <View style={styles.progressRow}>
               <View style={styles.progressInfo}>
                 <View style={[styles.progressDot, { backgroundColor: '#10b981' }]} />
-                <Text style={styles.progressText}>Known Words</Text>
+                <Text style={styles.progressText}>Reviewed Words</Text>
               </View>
-              <Text style={styles.progressNumber}>{progress.knownWords}</Text>
+              <Text style={styles.progressNumber}>{progress.reviewedWords}</Text>
             </View>
 
             <View style={styles.progressRow}>
               <View style={styles.progressInfo}>
                 <View style={[styles.progressDot, { backgroundColor: '#f59e0b' }]} />
-                <Text style={styles.progressText}>Review Later</Text>
+                <Text style={styles.progressText}>Due Today</Text>
               </View>
-              <Text style={styles.progressNumber}>{progress.reviewWords}</Text>
+              <Text style={styles.progressNumber}>{progress.dueToday}</Text>
             </View>
 
             <View style={styles.progressRow}>
               <View style={styles.progressInfo}>
                 <View style={[styles.progressDot, { backgroundColor: '#6366f1' }]} />
-                <Text style={styles.progressText}>New Words</Text>
+                <Text style={styles.progressText}>Not Reviewed</Text>
               </View>
-              <Text style={styles.progressNumber}>{progress.newWords}</Text>
+              <Text style={styles.progressNumber}>{progress.totalWords - progress.reviewedWords}</Text>
             </View>
           </View>
 
@@ -171,7 +170,7 @@ export default function ProgressScreen({ navigation }) {
                 style={[
                   styles.progressSegment,
                   { 
-                    width: `${(progress.knownWords / progress.totalWords) * 100}%`,
+                    width: `${progress.totalWords > 0 ? (progress.reviewedWords / progress.totalWords) * 100 : 0}%`,
                     backgroundColor: '#10b981',
                     borderTopLeftRadius: 8,
                     borderBottomLeftRadius: 8,
@@ -182,7 +181,7 @@ export default function ProgressScreen({ navigation }) {
                 style={[
                   styles.progressSegment,
                   { 
-                    width: `${(progress.reviewWords / progress.totalWords) * 100}%`,
+                    width: `${progress.totalWords > 0 ? (progress.dueToday / progress.totalWords) * 100 : 0}%`,
                     backgroundColor: '#f59e0b',
                   }
                 ]} 
@@ -191,7 +190,7 @@ export default function ProgressScreen({ navigation }) {
                 style={[
                   styles.progressSegment,
                   { 
-                    width: `${(progress.newWords / progress.totalWords) * 100}%`,
+                    width: `${progress.totalWords > 0 ? ((progress.totalWords - progress.reviewedWords - progress.dueToday) / progress.totalWords) * 100 : 0}%`,
                     backgroundColor: '#6366f1',
                     borderTopRightRadius: 8,
                     borderBottomRightRadius: 8,
@@ -202,10 +201,10 @@ export default function ProgressScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Spaced Repetition (Placeholder) */}
+        {/* Spaced Repetition */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Spaced Repetition</Text>
-          <Text style={styles.sectionSubtitle}>Coming soon in future updates!</Text>
+          <Text style={styles.sectionTitle}>Spaced Repetition Schedule</Text>
+          <Text style={styles.sectionSubtitle}>Based on FSRS algorithm</Text>
           
           <View style={styles.spacedRepetitionGrid}>
             <View style={styles.spacedRepetitionCard}>
@@ -240,10 +239,10 @@ export default function ProgressScreen({ navigation }) {
                     <Text style={styles.recentWordText}>{word.word}</Text>
                     <View style={[
                       styles.recentWordStatus,
-                      { backgroundColor: getStatusColor(word.status) }
+                      { backgroundColor: getGradeColor(word.fsrs?.lastGrade || 0) }
                     ]}>
                       <Text style={styles.recentWordStatusText}>
-                        {getStatusText(word.status)}
+                        {getGradeText(word.fsrs?.lastGrade || 0)}
                       </Text>
                     </View>
                   </View>

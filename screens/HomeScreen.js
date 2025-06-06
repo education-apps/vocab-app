@@ -17,9 +17,11 @@ const { width } = Dimensions.get('window');
 export default function HomeScreen({ navigation }) {
   const [progress, setProgress] = useState({
     totalWords: 0,
-    knownWords: 0,
-    reviewWords: 0,
-    newWords: 0,
+    dueToday: 0,
+    dueTomorrow: 0,
+    dueThisWeek: 0,
+    reviewedWords: 0,
+    totalReviews: 0,
     accuracy: 0,
   });
 
@@ -99,7 +101,7 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.quickStatsTitle}>Today's Learning</Text>
             <View style={styles.dueWordsContainer}>
               <Ionicons name="today" size={32} color="rgba(255,255,255,0.9)" />
-              <Text style={styles.dueWordsNumber}>{progress.newWords + progress.reviewWords}</Text>
+              <Text style={styles.dueWordsNumber}>{progress.dueToday}</Text>
               <Text style={styles.dueWordsLabel}>words due today</Text>
             </View>
           </View>

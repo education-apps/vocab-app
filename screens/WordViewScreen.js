@@ -1,94 +1,90 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  Alert,
   ScrollView,
   Dimensions,
-  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import { getVocabularyWords, updateWordStatus, getCurrentWordIndex, saveCurrentWordIndex, getSettings, processWordReview } from '../utils/storage';
-import { Grade } from '../utils/fsrs';
 
-const { width, height } = Dimensions.get('window');
+import { getDueWordsForReview, processFsrsReview, getSettings } from '../utils/storage.js';
+import { Grade } from '../utils/fsrs.js';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 export default function WordViewScreen({ navigation }) {
   const [words, setWords] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [currentWord, setCurrentWord] = useState(null);
   const [showDefinition, setShowDefinition] = useState(false);
-  const [settings, setSettings] = useState({ imageMood: 'humorous', vocabularySet: 'general' });
-  const [currentMode, setCurrentMode] = useState('humorous');
-  const [sound, setSound] = useState(null);
+  const [currentMode, setCurrentMode] = useState('humorous'); // 'humorous' or 'formal'
+  const [sound, setSound] = useState();
 
   useEffect(() => {
-    const loadData = async () => {
-      // Load settings first to get the current mode
-      await loadSettings();
-      // Then load words
-      await loadWords();
-    };
-    
     loadData();
     
+    // Listen for when screen comes into focus (e.g., returning from settings)
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadSettings(); // Reload settings when coming back to this screen
+    });
+    
     return () => {
+      // Cleanup sound when component unmounts
       if (sound) {
         sound.unloadAsync();
       }
+      unsubscribe();
     };
-  }, []);
-
-  // Listen for navigation focus to reload settings when returning from Settings
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', async () => {
-      console.log('WordView screen focused, reloading settings...');
-      await loadSettings();
-    });
-
-    return unsubscribe;
   }, [navigation]);
 
-  useEffect(() => {
-    if (words.length > 0) {
-      setCurrentWord(words[currentIndex]);
-      setShowDefinition(false); // Reset definition visibility when word changes
-      // Save current index whenever it changes
-      saveCurrentWordIndex(currentIndex);
+  const loadData = async () => {
+    try {
+      await loadWords();
+      await loadSettings();
+    } catch (error) {
+      console.error('Error loading data:', error);
+      Alert.alert('Error', 'Failed to load vocabulary words. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  }, [words, currentIndex]);
+  };
 
   const loadWords = async () => {
     try {
-      const vocabularyData = await getVocabularyWords();
-      const savedIndex = await getCurrentWordIndex();
+      let wordList;
+      const route = navigation.getState()?.routes?.find(r => r.name === 'WordView');
+      const source = route?.params?.source;
       
-      setWords(vocabularyData);
-      
-      // Set the current index to the saved position, but ensure it's valid
-      if (savedIndex < vocabularyData.length) {
-        setCurrentIndex(savedIndex);
+      if (source === 'due') {
+        wordList = await getDueWordsForReview(20);
       } else {
-        setCurrentIndex(0);
+        // Default to due words if no specific source
+        wordList = await getDueWordsForReview(20);
       }
       
-      setLoading(false);
+      if (wordList && wordList.length > 0) {
+        setWords(wordList);
+        setCurrentIndex(0);
+      } else {
+        // No words available
+        setWords([]);
+      }
     } catch (error) {
       console.error('Error loading words:', error);
-      setLoading(false);
+      throw error;
     }
   };
 
   const loadSettings = async () => {
     try {
-      const userSettings = await getSettings();
-      setSettings(userSettings);
-      setCurrentMode(userSettings.imageMood);
+      const settings = await getSettings();
+      setCurrentMode(settings.imageMood || 'humorous');
     } catch (error) {
       console.error('Error loading settings:', error);
     }
@@ -96,19 +92,11 @@ export default function WordViewScreen({ navigation }) {
 
   const playAudio = async (audioPath) => {
     try {
-      // For MVP, we'll show an alert since audio files don't exist yet
-      Alert.alert('Audio Feature', `Playing audio: ${audioPath}\n\nThis feature will play actual audio files when they are available.`);
-      
-      // Future implementation:
-      // if (sound) {
-      //   await sound.unloadAsync();
-      // }
-      // const { sound: newSound } = await Audio.Sound.createAsync({ uri: audioPath });
-      // setSound(newSound);
-      // await newSound.playAsync();
+      console.log('Playing audio:', audioPath);
+      // For now, just log the audio path since we don't have actual audio files
+      Alert.alert('Audio', `Playing: ${audioPath}`);
     } catch (error) {
       console.error('Error playing audio:', error);
-      Alert.alert('Audio Error', 'Could not play audio file.');
     }
   };
 
@@ -116,28 +104,24 @@ export default function WordViewScreen({ navigation }) {
     setShowDefinition(true);
   };
 
-  // FSRS grading function (placeholder for now)
   const handleFsrsGrade = async (grade) => {
-    if (!currentWord) return;
-
     try {
-      // TODO: Replace with actual FSRS review processing when algorithm is implemented
-      console.log(`FSRS Grade: ${grade} for word: ${currentWord.word}`);
+      const currentWord = words[currentIndex];
+      if (!currentWord) return;
       
-      // For now, use the existing word status update logic
-      // In the future, this will call processWordReview(currentWord.id, grade)
-      const newStatus = grade === Grade.FORGOT ? 'review' : grade >= Grade.GOOD ? 'known' : 'review';
-      await updateWordStatus(currentWord.id, newStatus);
+      // Process the review using real FSRS algorithm
+      const reviewedWord = await processFsrsReview(currentWord.id, grade);
       
       // Update local state
       const updatedWords = words.map(word => 
-        word.id === currentWord.id ? { ...word, status: newStatus } : word
+        word.id === currentWord.id ? reviewedWord : word
       );
       setWords(updatedWords);
 
       // Move to next word or finish
       if (currentIndex < words.length - 1) {
         setCurrentIndex(currentIndex + 1);
+        setShowDefinition(false); // Reset for next word
       } else {
         // Finished all words
         Alert.alert(
@@ -150,7 +134,10 @@ export default function WordViewScreen({ navigation }) {
             },
             {
               text: 'Review Again',
-              onPress: () => setCurrentIndex(0),
+              onPress: () => {
+                setCurrentIndex(0);
+                setShowDefinition(false);
+              },
             },
           ]
         );
@@ -172,17 +159,25 @@ export default function WordViewScreen({ navigation }) {
     );
   }
 
-  if (!currentWord) {
+  if (!words.length || !words[currentIndex]) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Ionicons name="alert-circle" size={60} color="#ef4444" />
-          <Text style={styles.loadingText}>No words available</Text>
+          <Ionicons name="checkmark-circle" size={60} color="#10b981" />
+          <Text style={styles.loadingText}>All caught up!</Text>
+          <Text style={styles.loadingSubtext}>No words due for review right now.</Text>
+          <TouchableOpacity 
+            style={styles.goHomeButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.goHomeButtonText}>Go Home</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
+  const currentWord = words[currentIndex];
   // Get mode-specific data
   const modeData = currentWord.modes && currentWord.modes[currentMode] ? currentWord.modes[currentMode] : null;
 
@@ -306,70 +301,51 @@ export default function WordViewScreen({ navigation }) {
                     "{modeData ? modeData.sentence : 'No example available for this mode'}"
                   </Text>
                 </View>
+
+                {/* FSRS Review Buttons */}
+                <View style={styles.fsrsButtonContainer}>
+                  <Text style={styles.fsrsTitle}>How well did you know this word?</Text>
+                  <View style={styles.fsrsButtonRow}>
+                    <TouchableOpacity
+                      style={[styles.fsrsButton, styles.forgotButton]}
+                      onPress={() => handleFsrsGrade(Grade.FORGOT)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="close" size={20} color="white" />
+                      <Text style={styles.fsrsButtonText}>Forgot</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.fsrsButton, styles.hardButton]}
+                      onPress={() => handleFsrsGrade(Grade.HARD)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="remove" size={20} color="white" />
+                      <Text style={styles.fsrsButtonText}>Hard</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.fsrsButton, styles.goodButton]}
+                      onPress={() => handleFsrsGrade(Grade.GOOD)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="checkmark" size={20} color="white" />
+                      <Text style={styles.fsrsButtonText}>Good</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.fsrsButton, styles.easyButton]}
+                      onPress={() => handleFsrsGrade(Grade.EASY)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="star" size={20} color="white" />
+                      <Text style={styles.fsrsButtonText}>Easy</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
             )}
-
-            {/* Status Indicator */}
-            <View style={styles.statusContainer}>
-              <View style={[
-                styles.statusIndicator,
-                currentWord.status === 'known' && styles.statusKnown,
-                currentWord.status === 'review' && styles.statusReview,
-                currentWord.status === 'new' && styles.statusNew,
-              ]}>
-                <Text style={styles.statusText}>
-                  {currentWord.status === 'known' ? '✅ Known' : 
-                   currentWord.status === 'review' ? '🔄 Review' : '📝 New'}
-                </Text>
-              </View>
-            </View>
           </View>
-
-          {/* Action Buttons - Only show if definition is revealed */}
-          {showDefinition && (
-            <View style={styles.actionButtons}>
-              {/* FSRS Grading Buttons */}
-              <Text style={styles.gradingTitle}>How well did you know this word?</Text>
-              
-              <View style={styles.gradingButtons}>
-                <TouchableOpacity
-                  style={[styles.gradeButton, styles.forgotButton]}
-                  onPress={() => handleFsrsGrade(Grade.FORGOT)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.gradeButtonText}>😟 Forgot</Text>
-                  <Text style={styles.gradeButtonSubtext}>~10 min</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.gradeButton, styles.hardButton]}
-                  onPress={() => handleFsrsGrade(Grade.HARD)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.gradeButtonText}>😅 Hard</Text>
-                  <Text style={styles.gradeButtonSubtext}>~6 hours</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.gradeButton, styles.goodButton]}
-                  onPress={() => handleFsrsGrade(Grade.GOOD)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.gradeButtonText}>😊 Good</Text>
-                  <Text style={styles.gradeButtonSubtext}>~1 day</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.gradeButton, styles.easyButton]}
-                  onPress={() => handleFsrsGrade(Grade.EASY)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.gradeButtonText}>😎 Easy</Text>
-                  <Text style={styles.gradeButtonSubtext}>~4 days</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
         </ScrollView>
       </LinearGradient>
     </SafeAreaView>
@@ -392,6 +368,22 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#64748b',
     marginTop: 16,
+  },
+  loadingSubtext: {
+    fontSize: 14,
+    color: '#64748b',
+    marginTop: 8,
+  },
+  goHomeButton: {
+    padding: 16,
+    backgroundColor: '#6366f1',
+    borderRadius: 12,
+    marginTop: 20,
+  },
+  goHomeButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
   },
   progressContainer: {
     flexDirection: 'row',
@@ -573,46 +565,23 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     fontStyle: 'italic',
   },
-  statusContainer: {
-    alignItems: 'center',
-  },
-  statusIndicator: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#e5e7eb',
-  },
-  statusKnown: {
-    backgroundColor: '#d1fae5',
-  },
-  statusReview: {
-    backgroundColor: '#fef3c7',
-  },
-  statusNew: {
-    backgroundColor: '#dbeafe',
-  },
-  statusText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  actionButtons: {
+  fsrsButtonContainer: {
     marginHorizontal: 4,
     marginBottom: 20,
   },
-  gradingTitle: {
+  fsrsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#374151',
     marginBottom: 16,
     textAlign: 'center',
   },
-  gradingButtons: {
+  fsrsButtonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 20,
   },
-  gradeButton: {
+  fsrsButton: {
     flex: 0.23,
     alignItems: 'center',
     justifyContent: 'center',
@@ -638,17 +607,11 @@ const styles = StyleSheet.create({
   easyButton: {
     backgroundColor: '#3b82f6',
   },
-  gradeButtonText: {
+  fsrsButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: 'white',
     marginBottom: 2,
     textAlign: 'center',
-  },
-  gradeButtonSubtext: {
-    fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
-    lineHeight: 12,
   },
 }); 
