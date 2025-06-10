@@ -16,13 +16,14 @@
     "expo": "~53.0.9",
     "expo-av": "^15.1.4",
     "expo-linear-gradient": "^14.1.4",
+    "expo-speech": "^13.1.7",
+    "expo-sqlite": "~15.2.10",
     "expo-status-bar": "~2.2.3",
     "react": "19.0.0",
     "react-native": "0.79.2",
     "react-native-safe-area-context": "^5.4.1",
     "react-native-screens": "^4.11.1",
-    "ts-fsrs": "^5.0.1",
-    "expo-sqlite": "~15.2.10"
+    "ts-fsrs": "^5.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

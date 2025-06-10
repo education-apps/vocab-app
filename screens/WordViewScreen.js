@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
+import * as Speech from 'expo-speech';
 
 import { getDueWordsForReview, processFsrsReview, getSettings } from '../utils/storage.js';
 import { Grade } from '../utils/fsrs.js';
@@ -25,6 +26,7 @@ export default function WordViewScreen({ navigation }) {
   const [showDefinition, setShowDefinition] = useState(false);
   const [currentMode, setCurrentMode] = useState('humorous'); // 'humorous' or 'formal'
   const [sound, setSound] = useState();
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -39,6 +41,8 @@ export default function WordViewScreen({ navigation }) {
       if (sound) {
         sound.unloadAsync();
       }
+      // Stop any ongoing speech when component unmounts
+      Speech.stop();
       unsubscribe();
     };
   }, [navigation]);
@@ -100,6 +104,36 @@ export default function WordViewScreen({ navigation }) {
     }
   };
 
+  const speakText = async (text, options = {}) => {
+    try {
+      // Stop any currently playing speech
+      if (await Speech.isSpeakingAsync()) {
+        await Speech.stop();
+        setIsSpeaking(false);
+        return;
+      }
+      
+      // Default speech options
+      const speechOptions = {
+        language: 'en-US',
+        pitch: 1.0,
+        rate: 0.8,
+        ...options,
+        onStart: () => setIsSpeaking(true),
+        onDone: () => setIsSpeaking(false),
+        onStopped: () => setIsSpeaking(false),
+        onError: () => setIsSpeaking(false)
+      };
+      
+      // Speak the text
+      await Speech.speak(text, speechOptions);
+    } catch (error) {
+      console.error('Error with text-to-speech:', error);
+      setIsSpeaking(false);
+      Alert.alert('Error', 'Could not play text-to-speech');
+    }
+  };
+
   const handleShowDefinition = () => {
     setShowDefinition(true);
   };
@@ -117,6 +151,12 @@ export default function WordViewScreen({ navigation }) {
         word.id === currentWord.id ? reviewedWord : word
       );
       setWords(updatedWords);
+
+      // Stop any ongoing speech before moving to next word
+      if (await Speech.isSpeakingAsync()) {
+        await Speech.stop();
+        setIsSpeaking(false);
+      }
 
       // Move to next word or finish
       if (currentIndex < words.length - 1) {
@@ -222,11 +262,15 @@ export default function WordViewScreen({ navigation }) {
               <View style={styles.wordTitleContainer}>
                 <Text style={styles.word}>{currentWord.word}</Text>
                 <TouchableOpacity 
-                  style={styles.audioButton}
-                  onPress={() => playAudio(currentWord.pronunciation_audio)}
+                  style={[styles.audioButton, isSpeaking && styles.audioButtonActive]}
+                  onPress={() => speakText(currentWord.word, { rate: 0.6, pitch: 1.1 })}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="volume-high" size={24} color="#6366f1" />
+                  <Ionicons 
+                    name={isSpeaking ? "stop" : "volume-high"} 
+                    size={24} 
+                    color={isSpeaking ? "#fff" : "#6366f1"} 
+                  />
                 </TouchableOpacity>
               </View>
               <View style={styles.partOfSpeechContainer}>
@@ -273,11 +317,15 @@ export default function WordViewScreen({ navigation }) {
                   <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Definition</Text>
                     <TouchableOpacity 
-                      style={styles.audioButtonSmall}
-                      onPress={() => playAudio(currentWord.definition_audio)}
+                      style={[styles.audioButtonSmall, isSpeaking && styles.audioButtonSmallActive]}
+                      onPress={() => speakText(currentWord.definition, { rate: 0.8 })}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="volume-high" size={18} color="#6366f1" />
+                      <Ionicons 
+                        name={isSpeaking ? "stop" : "volume-high"} 
+                        size={18} 
+                        color={isSpeaking ? "#fff" : "#6366f1"} 
+                      />
                     </TouchableOpacity>
                   </View>
                   <Text style={styles.definition}>{currentWord.definition}</Text>
@@ -288,12 +336,16 @@ export default function WordViewScreen({ navigation }) {
                   <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Example ({currentMode})</Text>
                     {modeData && (
-                      <TouchableOpacity 
-                        style={styles.audioButtonSmall}
-                        onPress={() => playAudio(modeData.sentence_audio)}
+                                              <TouchableOpacity 
+                        style={[styles.audioButtonSmall, isSpeaking && styles.audioButtonSmallActive]}
+                        onPress={() => speakText(modeData.sentence, { rate: 0.85 })}
                         activeOpacity={0.7}
                       >
-                        <Ionicons name="volume-high" size={18} color="#6366f1" />
+                        <Ionicons 
+                          name={isSpeaking ? "stop" : "volume-high"} 
+                          size={18} 
+                          color={isSpeaking ? "#fff" : "#6366f1"} 
+                        />
                       </TouchableOpacity>
                     )}
                   </View>
@@ -463,11 +515,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9',
     borderRadius: 20,
   },
+  audioButtonActive: {
+    backgroundColor: '#6366f1',
+  },
   audioButtonSmall: {
     padding: 6,
     backgroundColor: '#f1f5f9',
     borderRadius: 15,
     marginLeft: 8,
+  },
+  audioButtonSmallActive: {
+    backgroundColor: '#6366f1',
   },
   partOfSpeechContainer: {
     backgroundColor: '#6366f1',
