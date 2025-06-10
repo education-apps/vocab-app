@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { getSettings, updateSettings } from '../utils/storage';
+import { getSettings, updateSettings, resetToFreshISEEVocabulary } from '../utils/storage';
 
 export default function SettingsScreen() {
   const [settings, setSettings] = useState({
@@ -110,6 +110,37 @@ export default function SettingsScreen() {
           style: settings.vocabularySet === 'general' ? 'default' : 'default',
         },
         // Future options can be added here
+      ]
+    );
+  };
+
+  const handleResetProgress = () => {
+    Alert.alert(
+      'Reset Learning Progress',
+      'Are you sure you want to reset all your learning progress? This will:\n\n• Clear all review history\n• Reset word difficulty ratings\n• Remove all learning streaks\n• Start fresh with ISEE vocabulary\n\nThis action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset Progress',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await resetToFreshISEEVocabulary();
+              Alert.alert(
+                'Progress Reset',
+                'Your learning progress has been successfully reset. You can now start fresh with the ISEE vocabulary!',
+                [{ text: 'OK' }]
+              );
+            } catch (error) {
+              console.error('Error resetting progress:', error);
+              Alert.alert(
+                'Error',
+                'Failed to reset progress. Please try again.',
+                [{ text: 'OK' }]
+              );
+            }
+          },
+        },
       ]
     );
   };
@@ -246,6 +277,23 @@ export default function SettingsScreen() {
               </Text>
             </View>
           </View>
+        </View>
+
+        {/* Data Management */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Data Management</Text>
+          
+          <TouchableOpacity style={styles.resetButton} onPress={handleResetProgress}>
+            <View style={styles.resetButtonContent}>
+              <Ionicons name="refresh-outline" size={24} color="#dc2626" />
+              <View style={styles.resetButtonText}>
+                <Text style={styles.resetButtonTitle}>Reset Learning Progress</Text>
+                <Text style={styles.resetButtonSubtitle}>
+                  Clear all spaced repetition data and progress
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* Footer */}
@@ -467,5 +515,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9ca3af',
     textAlign: 'center',
+  },
+  resetButton: {
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+  },
+  resetButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  resetButtonText: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  resetButtonTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#dc2626',
+    marginBottom: 4,
+  },
+  resetButtonSubtitle: {
+    fontSize: 14,
+    color: '#7f1d1d',
+    lineHeight: 18,
   },
 }); 

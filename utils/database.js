@@ -113,4 +113,33 @@ export const checkVocabularyLoaded = async () => {
 };
 
 // Get database instance for direct queries
-export { db }; 
+export { db };
+
+// Clear all vocabulary and progress data for fresh start
+export const clearAllData = async () => {
+  try {
+    console.log('Clearing all vocabulary and progress data...');
+    const database = await db;
+    
+    // Clear review history first (has foreign key constraints)
+    await database.execAsync('DELETE FROM review_history');
+    console.log('✓ Review history cleared');
+    
+    // Clear FSRS data
+    await database.execAsync('DELETE FROM fsrs_data');
+    console.log('✓ FSRS data cleared');
+    
+    // Clear vocabulary data
+    await database.execAsync('DELETE FROM vocabulary');
+    console.log('✓ Vocabulary data cleared');
+    
+    // Reset auto-increment counters
+    await database.execAsync('DELETE FROM sqlite_sequence WHERE name IN ("review_history")');
+    console.log('✓ Database sequences reset');
+    
+    console.log('All data cleared successfully');
+  } catch (error) {
+    console.error('Error clearing data:', error);
+    throw error;
+  }
+}; 

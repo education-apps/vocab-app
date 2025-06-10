@@ -1,5 +1,5 @@
 import { db } from './database.js';
-import { vocabularyWords } from '../data/vocabulary.js';
+import { vocabularyWords } from '../data/isee_vocabulary.js';
 
 // Helper function to extract category from word ID or position
 const extractCategory = (wordId) => {

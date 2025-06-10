@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { initializeDatabase, checkVocabularyLoaded } from './database.js';
+import { initializeDatabase, checkVocabularyLoaded, clearAllData } from './database.js';
 import { loadVocabularyData, getWordById, getDueWords, getAllWords } from './vocabDatabase.js';
 import { updateFsrsData, getUserProgress, getRecentWords } from './fsrsDatabase.js';
 import { processReview } from './fsrs.js';
@@ -23,7 +23,7 @@ const STORAGE_KEYS = {
 };
 
 // Initialize vocabulary data using SQLite database
-// This loads vocabulary.js data into SQLite (one-time operation)
+// This loads isee_vocabulary.js data into SQLite (one-time operation)
 export const initializeVocabularyData = async () => {
   try {
     console.log('Initializing database...');
@@ -34,7 +34,7 @@ export const initializeVocabularyData = async () => {
     
     if (!isLoaded) {
       console.log('Loading vocabulary data into database...');
-      await loadVocabularyData(); // Loads from vocabulary.js into SQLite
+      await loadVocabularyData(); // Loads from isee_vocabulary.js into SQLite
     } else {
       console.log('Vocabulary data already loaded');
     }
@@ -42,6 +42,20 @@ export const initializeVocabularyData = async () => {
     console.log('App data initialized successfully');
   } catch (error) {
     console.error('Error initializing vocabulary data:', error);
+    throw error;
+  }
+};
+
+// Reset all progress and reload fresh ISEE vocabulary (can be called manually)
+export const resetToFreshISEEVocabulary = async () => {
+  try {
+    console.log('Resetting to fresh ISEE vocabulary...');
+    await clearAllData();
+    await loadVocabularyData();
+    console.log('Successfully reset to fresh ISEE vocabulary');
+    return true;
+  } catch (error) {
+    console.error('Error resetting to fresh ISEE vocabulary:', error);
     throw error;
   }
 };
