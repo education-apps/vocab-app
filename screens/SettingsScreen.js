@@ -138,7 +138,7 @@ export default function SettingsScreen() {
         }
       ],
       'plain-text',
-      settings.dailyNewWords.toString(),
+      (settings.dailyNewWords || 20).toString(),
       'numeric'
     );
   };
@@ -203,7 +203,7 @@ export default function SettingsScreen() {
             icon="calendar-outline"
             title="Daily New Words"
             subtitle="Number of new words to learn each day"
-            value={`${settings.dailyNewWords} words`}
+            value={`${settings.dailyNewWords || 20} words`}
             onPress={showDailyNewWordsOptions}
           />
 

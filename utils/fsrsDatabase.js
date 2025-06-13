@@ -92,18 +92,20 @@ export const getUserProgress = async (dailyNewWordsLimit = 20) => {
       LEFT JOIN fsrs_data f ON v.id = f.word_id
     `);
 
-    // Count today's allocated new words that haven't been reviewed yet
-    const allocatedNewWordsQuery = await database.getFirstAsync(`
-      SELECT COUNT(*) as count
+    // Get today's allocated new words that haven't been reviewed yet, limited by current setting
+    const allocatedNewWordsList = await database.getAllAsync(`
+      SELECT da.word_id
       FROM daily_allocations da
       INNER JOIN vocabulary v ON da.word_id = v.id
       LEFT JOIN fsrs_data f ON v.id = f.word_id
       WHERE da.allocation_date = ? 
         AND (f.review_count = 0 OR f.review_count IS NULL)
-    `, [today]);
+      ORDER BY da.id ASC
+      LIMIT ?
+    `, [today, dailyNewWordsLimit]);
 
     const scheduledReviews = dueStatsQuery?.scheduled_reviews || 0;
-    const allocatedNewWords = allocatedNewWordsQuery?.count || 0;
+    const allocatedNewWords = allocatedNewWordsList?.length || 0;
     const totalNewWords = dueStatsQuery?.total_new_words || 0;
     const dueToday = scheduledReviews + allocatedNewWords;
     

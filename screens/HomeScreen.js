@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { getUserProgressWithSettings } from '../utils/storage';
@@ -25,20 +26,21 @@ export default function HomeScreen({ navigation }) {
     accuracy: 0,
   });
 
-  useEffect(() => {
-    const loadProgress = async () => {
+  const loadProgress = useCallback(async () => {
+    try {
       const progressData = await getUserProgressWithSettings();
       setProgress(progressData);
-    };
+    } catch (error) {
+      console.error('Error loading progress:', error);
+    }
+  }, []);
 
-    const unsubscribe = navigation.addListener('focus', () => {
+  // Use useFocusEffect to ensure progress is refreshed every time screen is focused
+  useFocusEffect(
+    useCallback(() => {
       loadProgress();
-    });
-
-    loadProgress();
-
-    return unsubscribe;
-  }, [navigation]);
+    }, [loadProgress])
+  );
 
   const handleStartLearning = () => {
     navigation.navigate('WordView');

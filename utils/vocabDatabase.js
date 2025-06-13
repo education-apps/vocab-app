@@ -202,7 +202,7 @@ export const getDueWords = async (dailyNewWordsLimit = 20) => {
       ORDER BY f.next_review_date ASC
     `);
     
-    // Get today's allocated new words that haven't been reviewed yet
+    // Get today's allocated new words that haven't been reviewed yet (limited by current setting)
     const allocatedNewWords = await database.getAllAsync(`
       SELECT 
         v.*,
@@ -214,8 +214,9 @@ export const getDueWords = async (dailyNewWordsLimit = 20) => {
       LEFT JOIN fsrs_data f ON v.id = f.word_id
       WHERE da.allocation_date = ? 
         AND (f.review_count = 0 OR f.review_count IS NULL)
-      ORDER BY v.id ASC
-    `, [today]);
+      ORDER BY da.id ASC
+      LIMIT ?
+    `, [today, dailyNewWordsLimit]);
     
     // Combine review words and allocated new words
     const allDueWords = [...reviewWords, ...allocatedNewWords];
