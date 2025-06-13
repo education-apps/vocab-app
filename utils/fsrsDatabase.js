@@ -1,4 +1,5 @@
 import { db } from './database.js';
+import { allocateNewWordsForToday } from './vocabDatabase.js';
 
 // Update FSRS data after review
 export const updateFsrsData = async (wordId, fsrsData) => {
@@ -59,14 +60,14 @@ export const updateFsrsData = async (wordId, fsrsData) => {
 };
 
 // Get user progress statistics
-export const getUserProgress = async () => {
+export const getUserProgress = async (dailyNewWordsLimit = 20) => {
   try {
     const database = await db;
     
+    // Get basic stats
     const stats = await database.getFirstAsync(`
       SELECT 
         COUNT(*) as total_words,
-        SUM(CASE WHEN (f.next_review_date IS NULL OR f.next_review_date <= datetime('now') OR f.review_count = 0) THEN 1 ELSE 0 END) as due_today,
         SUM(CASE WHEN f.next_review_date > datetime('now') AND f.next_review_date <= datetime('now', '+1 day') THEN 1 ELSE 0 END) as due_tomorrow,
         SUM(CASE WHEN f.next_review_date > datetime('now') AND f.next_review_date <= datetime('now', '+7 days') THEN 1 ELSE 0 END) as due_this_week,
         SUM(COALESCE(f.review_count, 0)) as total_reviews,
@@ -74,6 +75,37 @@ export const getUserProgress = async () => {
       FROM vocabulary v
       LEFT JOIN fsrs_data f ON v.id = f.word_id
     `);
+
+    // Calculate due today with daily allocation system
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    // First, ensure we have allocated new words for today (same as in getDueWords)
+    await allocateNewWordsForToday(dailyNewWordsLimit);
+    
+    const dueStatsQuery = await database.getFirstAsync(`
+      SELECT 
+        -- Count scheduled review words (no limit)
+        SUM(CASE WHEN f.next_review_date <= datetime('now') AND f.review_count > 0 THEN 1 ELSE 0 END) as scheduled_reviews,
+        -- Count total new words available
+        SUM(CASE WHEN (f.next_review_date IS NULL OR f.review_count = 0) THEN 1 ELSE 0 END) as total_new_words
+      FROM vocabulary v
+      LEFT JOIN fsrs_data f ON v.id = f.word_id
+    `);
+
+    // Count today's allocated new words that haven't been reviewed yet
+    const allocatedNewWordsQuery = await database.getFirstAsync(`
+      SELECT COUNT(*) as count
+      FROM daily_allocations da
+      INNER JOIN vocabulary v ON da.word_id = v.id
+      LEFT JOIN fsrs_data f ON v.id = f.word_id
+      WHERE da.allocation_date = ? 
+        AND (f.review_count = 0 OR f.review_count IS NULL)
+    `, [today]);
+
+    const scheduledReviews = dueStatsQuery?.scheduled_reviews || 0;
+    const allocatedNewWords = allocatedNewWordsQuery?.count || 0;
+    const totalNewWords = dueStatsQuery?.total_new_words || 0;
+    const dueToday = scheduledReviews + allocatedNewWords;
     
     if (stats) {
       // Calculate retention rate from recent reviews
@@ -91,14 +123,18 @@ export const getUserProgress = async () => {
 
       return {
         totalWords: stats.total_words,
-        dueToday: stats.due_today,
+        dueToday: dueToday,
         dueTomorrow: stats.due_tomorrow,
         dueThisWeek: stats.due_this_week,
         totalReviews: stats.total_reviews || 0,
         reviewedWords: stats.reviewed_words || 0,
         averageReviews: stats.reviewed_words > 0 ? Math.round(stats.total_reviews / stats.reviewed_words) : 0,
         retentionRate: retentionRate,
-        accuracy: retentionData.recent_reviews > 0 ? Math.round((retentionData.successful_reviews / retentionData.recent_reviews) * 100) : 0
+        accuracy: retentionData.recent_reviews > 0 ? Math.round((retentionData.successful_reviews / retentionData.recent_reviews) * 100) : 0,
+        // Additional info for debugging/display
+        scheduledReviews: scheduledReviews,
+        allocatedNewWords: allocatedNewWords,
+        totalNewWords: totalNewWords
       };
     } else {
       return {

@@ -135,11 +135,62 @@ export const getAllWords = async (limit = 1000) => {
   }
 };
 
-// Get due words for review - optimized query
-export const getDueWords = async (limit = 20) => {
+// Allocate new words for today if not already allocated
+export const allocateNewWordsForToday = async (dailyNewWordsLimit) => {
   try {
     const database = await db;
-    const rows = await database.getAllAsync(`
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    // Check how many words are already allocated for today
+    const allocatedCount = await database.getFirstAsync(`
+      SELECT COUNT(*) as count 
+      FROM daily_allocations 
+      WHERE allocation_date = ?
+    `, [today]);
+    
+    const currentAllocated = allocatedCount?.count || 0;
+    const needToAllocate = Math.max(0, dailyNewWordsLimit - currentAllocated);
+    
+    if (needToAllocate > 0) {
+      // Get new words that haven't been allocated yet and haven't been reviewed
+      const newWordsToAllocate = await database.getAllAsync(`
+        SELECT v.id 
+        FROM vocabulary v
+        LEFT JOIN fsrs_data f ON v.id = f.word_id
+        LEFT JOIN daily_allocations da ON v.id = da.word_id
+        WHERE (f.review_count = 0 OR f.review_count IS NULL)
+          AND da.word_id IS NULL
+        ORDER BY v.id ASC
+        LIMIT ?
+      `, [needToAllocate]);
+      
+      // Allocate these words for today
+      for (const word of newWordsToAllocate) {
+        await database.runAsync(`
+          INSERT OR IGNORE INTO daily_allocations (word_id, allocation_date)
+          VALUES (?, ?)
+        `, [word.id, today]);
+      }
+    }
+    
+    return currentAllocated + needToAllocate;
+  } catch (error) {
+    console.error('Error allocating new words for today:', error);
+    throw error;
+  }
+};
+
+// Get due words for review - optimized query with daily new words limit
+export const getDueWords = async (dailyNewWordsLimit = 20) => {
+  try {
+    const database = await db;
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    // First, ensure we have allocated new words for today
+    await allocateNewWordsForToday(dailyNewWordsLimit);
+    
+    // Get all scheduled review words (no limit on these)
+    const reviewWords = await database.getAllAsync(`
       SELECT 
         v.*,
         f.stability, f.difficulty, f.last_review_date, f.next_review_date,
@@ -147,19 +198,51 @@ export const getDueWords = async (limit = 20) => {
         f.lapses, f.state, f.learning_steps
       FROM vocabulary v
       LEFT JOIN fsrs_data f ON v.id = f.word_id
-      WHERE (f.next_review_date IS NULL 
-         OR f.next_review_date <= datetime('now')
-         OR f.review_count = 0)
-      ORDER BY 
-        CASE WHEN f.next_review_date IS NULL THEN 0 ELSE 1 END,
-        f.next_review_date ASC
-      LIMIT ?
-    `, [limit]);
+      WHERE f.next_review_date <= datetime('now') AND f.review_count > 0
+      ORDER BY f.next_review_date ASC
+    `);
     
-    return rows.map(row => formatWordFromRow(row));
+    // Get today's allocated new words that haven't been reviewed yet
+    const allocatedNewWords = await database.getAllAsync(`
+      SELECT 
+        v.*,
+        f.stability, f.difficulty, f.last_review_date, f.next_review_date,
+        f.review_count, f.last_grade, f.elapsed_days, f.scheduled_days,
+        f.lapses, f.state, f.learning_steps
+      FROM vocabulary v
+      INNER JOIN daily_allocations da ON v.id = da.word_id
+      LEFT JOIN fsrs_data f ON v.id = f.word_id
+      WHERE da.allocation_date = ? 
+        AND (f.review_count = 0 OR f.review_count IS NULL)
+      ORDER BY v.id ASC
+    `, [today]);
+    
+    // Combine review words and allocated new words
+    const allDueWords = [...reviewWords, ...allocatedNewWords];
+    
+    return allDueWords.map(row => formatWordFromRow(row));
   } catch (error) {
     console.error('Error getting due words:', error);
     throw error;
+  }
+};
+
+// Clean up old daily allocations (older than 7 days)
+export const cleanupOldAllocations = async () => {
+  try {
+    const database = await db;
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekAgoStr = weekAgo.toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    await database.runAsync(`
+      DELETE FROM daily_allocations 
+      WHERE allocation_date < ?
+    `, [weekAgoStr]);
+    
+    console.log('Old daily allocations cleaned up');
+  } catch (error) {
+    console.error('Error cleaning up old allocations:', error);
   }
 };
 

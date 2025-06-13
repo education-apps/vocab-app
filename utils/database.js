@@ -73,6 +73,20 @@ export const initializeDatabase = async () => {
     `);
     console.log('✓ Review history table created');
 
+    // Daily allocations table - tracks which new words are allocated for each day
+    console.log('Creating daily_allocations table...');
+    await database.execAsync(`
+      CREATE TABLE IF NOT EXISTS daily_allocations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        word_id INTEGER,
+        allocation_date TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (word_id) REFERENCES vocabulary (id),
+        UNIQUE(word_id, allocation_date)
+      )
+    `);
+    console.log('✓ Daily allocations table created');
+
     // Indexes for performance optimization
     console.log('Creating database indexes...');
     await database.execAsync(`
@@ -88,6 +102,11 @@ export const initializeDatabase = async () => {
     await database.execAsync(`
       CREATE INDEX IF NOT EXISTS idx_review_history_word_date 
       ON review_history(word_id, review_date)
+    `);
+
+    await database.execAsync(`
+      CREATE INDEX IF NOT EXISTS idx_daily_allocations_date 
+      ON daily_allocations(allocation_date)
     `);
     console.log('✓ Database indexes created');
 
@@ -125,6 +144,10 @@ export const clearAllData = async () => {
     await database.execAsync('DELETE FROM review_history');
     console.log('✓ Review history cleared');
     
+    // Clear daily allocations
+    await database.execAsync('DELETE FROM daily_allocations');
+    console.log('✓ Daily allocations cleared');
+    
     // Clear FSRS data
     await database.execAsync('DELETE FROM fsrs_data');
     console.log('✓ FSRS data cleared');
@@ -134,7 +157,7 @@ export const clearAllData = async () => {
     console.log('✓ Vocabulary data cleared');
     
     // Reset auto-increment counters
-    await database.execAsync('DELETE FROM sqlite_sequence WHERE name IN ("review_history")');
+    await database.execAsync('DELETE FROM sqlite_sequence WHERE name IN ("review_history", "daily_allocations")');
     console.log('✓ Database sequences reset');
     
     console.log('All data cleared successfully');

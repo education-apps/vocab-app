@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initializeDatabase, checkVocabularyLoaded, clearAllData } from './database.js';
-import { loadVocabularyData, getWordById, getDueWords, getAllWords } from './vocabDatabase.js';
+import { loadVocabularyData, getWordById, getDueWords, getAllWords, cleanupOldAllocations } from './vocabDatabase.js';
 import { updateFsrsData, getUserProgress, getRecentWords } from './fsrsDatabase.js';
 import { processReview } from './fsrs.js';
 
@@ -39,6 +39,9 @@ export const initializeVocabularyData = async () => {
       console.log('Vocabulary data already loaded');
     }
     
+    // Clean up old daily allocations
+    await cleanupOldAllocations();
+    
     console.log('App data initialized successfully');
   } catch (error) {
     console.error('Error initializing vocabulary data:', error);
@@ -57,6 +60,30 @@ export const resetToFreshISEEVocabulary = async () => {
   } catch (error) {
     console.error('Error resetting to fresh ISEE vocabulary:', error);
     throw error;
+  }
+};
+
+// Helper function to get user progress with settings-based daily limit
+export const getUserProgressWithSettings = async () => {
+  try {
+    const settings = await getSettings();
+    return await getUserProgress(settings.dailyNewWords);
+  } catch (error) {
+    console.error('Error getting user progress with settings:', error);
+    // Fallback to default
+    return await getUserProgress(20);
+  }
+};
+
+// Helper function to get due words with settings-based daily limit
+export const getDueWordsWithSettings = async () => {
+  try {
+    const settings = await getSettings();
+    return await getDueWords(settings.dailyNewWords);
+  } catch (error) {
+    console.error('Error getting due words with settings:', error);
+    // Fallback to default
+    return await getDueWords(20);
   }
 };
 
@@ -82,8 +109,8 @@ export const processFsrsReview = async (wordId, grade) => {
   }
 };
 
-// Get words due for review (from database)
-export const getDueWordsForReview = getDueWords;
+// Get words due for review (from database) - now uses settings-based daily limit
+export const getDueWordsForReview = getDueWordsWithSettings;
 
 // App settings (stored in AsyncStorage, not database)
 export const getSettings = async () => {
@@ -92,12 +119,14 @@ export const getSettings = async () => {
     return settings ? JSON.parse(settings) : {
       imageMood: 'humorous',
       vocabularySet: 'general',
+      dailyNewWords: 20, // Default daily new words limit
     };
   } catch (error) {
     console.error('Error getting settings:', error);
     return {
       imageMood: 'humorous',
       vocabularySet: 'general',
+      dailyNewWords: 20, // Default daily new words limit
     };
   }
 };

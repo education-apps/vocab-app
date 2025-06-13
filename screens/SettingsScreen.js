@@ -17,6 +17,7 @@ export default function SettingsScreen() {
   const [settings, setSettings] = useState({
     imageMood: 'humorous',
     vocabularySet: 'general',
+    dailyNewWords: 20,
   });
 
   useEffect(() => {
@@ -114,6 +115,34 @@ export default function SettingsScreen() {
     );
   };
 
+  const showDailyNewWordsOptions = () => {
+    Alert.prompt(
+      'Daily New Words',
+      'How many new words would you like to learn each day?\n\nNote: You will also receive all scheduled review words in addition to new words.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Save', 
+          onPress: (input) => {
+            const newValue = parseInt(input);
+            if (isNaN(newValue) || newValue < 1) {
+              Alert.alert(
+                'Invalid Input',
+                'Please enter a valid number (minimum 1 word per day).',
+                [{ text: 'Try Again', onPress: showDailyNewWordsOptions }]
+              );
+              return;
+            }
+            handleSettingChange('dailyNewWords', newValue);
+          }
+        }
+      ],
+      'plain-text',
+      settings.dailyNewWords.toString(),
+      'numeric'
+    );
+  };
+
   const handleResetProgress = () => {
     Alert.alert(
       'Reset Learning Progress',
@@ -168,6 +197,14 @@ export default function SettingsScreen() {
             subtitle="Style of images and examples for vocabulary words"
             value={settings.imageMood === 'humorous' ? 'Humorous' : 'Formal'}
             onPress={showImageMoodOptions}
+          />
+
+          <SettingRow
+            icon="calendar-outline"
+            title="Daily New Words"
+            subtitle="Number of new words to learn each day"
+            value={`${settings.dailyNewWords} words`}
+            onPress={showDailyNewWordsOptions}
           />
 
           <SettingRow

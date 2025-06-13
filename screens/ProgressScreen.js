@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { getUserProgress, getRecentWords } from '../utils/storage';
+import { getUserProgressWithSettings, getRecentWords } from '../utils/storage';
 
 export default function ProgressScreen({ navigation }) {
   const [progress, setProgress] = useState({
@@ -40,7 +40,7 @@ export default function ProgressScreen({ navigation }) {
   const loadData = async () => {
     try {
       const [progressData, recentWordsData] = await Promise.all([
-        getUserProgress(),
+        getUserProgressWithSettings(),
         getRecentWords(),
       ]);
       setProgress(progressData);

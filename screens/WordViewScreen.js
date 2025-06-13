@@ -71,10 +71,10 @@ export default function WordViewScreen({ navigation }) {
       const source = route?.params?.source;
       
       if (source === 'due') {
-        wordList = await getDueWordsForReview(20);
+        wordList = await getDueWordsForReview();
       } else {
         // Default to due words if no specific source
-        wordList = await getDueWordsForReview(20);
+        wordList = await getDueWordsForReview();
       }
       
       if (wordList && wordList.length > 0) {

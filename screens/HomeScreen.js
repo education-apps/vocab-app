@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { getUserProgress } from '../utils/storage';
+import { getUserProgressWithSettings } from '../utils/storage';
 
 const { width } = Dimensions.get('window');
 
@@ -27,7 +27,7 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     const loadProgress = async () => {
-      const progressData = await getUserProgress();
+      const progressData = await getUserProgressWithSettings();
       setProgress(progressData);
     };
 
