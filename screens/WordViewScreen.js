@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
+import * as Audio from 'expo-audio';
 import * as Speech from 'expo-speech';
 
 import { getDueWordsForReview, processFsrsReview, getSettings } from '../utils/storage.js';
@@ -25,25 +25,30 @@ export default function WordViewScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [showDefinition, setShowDefinition] = useState(false);
   const [currentMode, setCurrentMode] = useState('humorous'); // 'humorous' or 'formal'
-  const [sound, setSound] = useState();
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
     loadData();
     
     // Listen for when screen comes into focus (e.g., returning from settings)
-    const unsubscribe = navigation.addListener('focus', () => {
+    const unsubscribeFocus = navigation.addListener('focus', () => {
       loadSettings(); // Reload settings when coming back to this screen
+    });
+
+    // Listen for when screen loses focus
+    const unsubscribeBlur = navigation.addListener('blur', async () => {
+      // Stop any ongoing speech when leaving the screen
+      if (await Speech.isSpeakingAsync()) {
+        await Speech.stop();
+        setIsSpeaking(false);
+      }
     });
     
     return () => {
-      // Cleanup sound when component unmounts
-      if (sound) {
-        sound.unloadAsync();
-      }
       // Stop any ongoing speech when component unmounts
       Speech.stop();
-      unsubscribe();
+      unsubscribeFocus();
+      unsubscribeBlur();
     };
   }, [navigation]);
 
