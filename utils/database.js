@@ -17,7 +17,6 @@ export const initializeDatabase = async () => {
         word TEXT NOT NULL,
         part_of_speech TEXT,
         definition TEXT NOT NULL,
-        category TEXT,
         pronunciation_audio TEXT,
         definition_audio TEXT,
         humorous_image TEXT,
@@ -94,11 +93,6 @@ export const initializeDatabase = async () => {
       ON fsrs_data(next_review_date)
     `);
     
-    await database.execAsync(`
-      CREATE INDEX IF NOT EXISTS idx_category 
-      ON vocabulary(category)
-    `);
-
     await database.execAsync(`
       CREATE INDEX IF NOT EXISTS idx_review_history_word_date 
       ON review_history(word_id, review_date)

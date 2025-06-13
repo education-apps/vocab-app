@@ -1,17 +1,6 @@
 import { db } from './database.js';
 import { vocabularyWords } from '../data/isee_vocabulary.js';
 
-// Helper function to extract category from word ID or position
-const extractCategory = (wordId) => {
-  // For now, simple categorization based on ID ranges
-  // You can modify this logic based on your categorization strategy
-  if (wordId <= 50) return 'general';
-  if (wordId <= 100) return 'academic';
-  if (wordId <= 150) return 'business';
-  if (wordId <= 200) return 'advanced';
-  return 'general';
-};
-
 // Load vocabulary data from static file into database
 export const loadVocabularyData = async () => {
   try {
@@ -20,16 +9,15 @@ export const loadVocabularyData = async () => {
     for (const word of vocabularyWords) {
       await database.runAsync(`
         INSERT OR REPLACE INTO vocabulary 
-        (id, word, part_of_speech, definition, category, pronunciation_audio, 
+        (id, word, part_of_speech, definition, pronunciation_audio, 
          definition_audio, humorous_image, humorous_sentence, humorous_sentence_audio,
          formal_image, formal_sentence, formal_sentence_audio)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         word.id,
         word.word,
         word.partOfSpeech,
         word.definition,
-        extractCategory(word.id),
         word.pronunciation_audio,
         word.definition_audio,
         word.modes?.humorous?.image,
@@ -55,7 +43,6 @@ const formatWordFromRow = (row) => {
     word: row.word,
     partOfSpeech: row.part_of_speech,
     definition: row.definition,
-    category: row.category,
     modes: {
       humorous: {
         image: row.humorous_image,
@@ -135,7 +122,7 @@ export const getAllWords = async (limit = 1000) => {
   }
 };
 
-// Allocate new words for today if not already allocated
+// Allocate new words for today if not already allocatedr
 export const allocateNewWordsForToday = async (dailyNewWordsLimit) => {
   try {
     const database = await db;
@@ -243,23 +230,5 @@ export const cleanupOldAllocations = async () => {
     console.log('Old daily allocations cleaned up');
   } catch (error) {
     console.error('Error cleaning up old allocations:', error);
-  }
-};
-
-// Get available categories
-export const getCategories = async () => {
-  try {
-    const database = await db;
-    const rows = await database.getAllAsync(`
-      SELECT DISTINCT category 
-      FROM vocabulary 
-      WHERE category IS NOT NULL 
-      ORDER BY category
-    `);
-    
-    return rows.map(row => row.category);
-  } catch (error) {
-    console.error('Error getting categories:', error);
-    throw error;
   }
 }; 

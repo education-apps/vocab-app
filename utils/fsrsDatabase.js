@@ -177,7 +177,6 @@ export const getRecentWords = async (limit = 5) => {
       word: row.word,
       partOfSpeech: row.part_of_speech,
       definition: row.definition,
-      category: row.category,
       modes: {
         humorous: {
           image: row.humorous_image,
