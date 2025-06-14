@@ -168,7 +168,9 @@ export default function WordViewScreen({ navigation }) {
         setCurrentIndex(currentIndex + 1);
         setShowDefinition(false); // Reset for next word
       } else {
-        // Finished all words
+        // Finished all words - add small delay to ensure all database operations complete
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
         Alert.alert(
           'Great Job!',
           'You\'ve reviewed all the vocabulary words! 🎉',

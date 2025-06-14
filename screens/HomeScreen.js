@@ -25,20 +25,30 @@ export default function HomeScreen({ navigation }) {
     totalReviews: 0,
     accuracy: 0,
   });
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const loadProgress = useCallback(async () => {
+  const loadProgress = useCallback(async (forceRefresh = false) => {
     try {
+      if (forceRefresh) {
+        setIsRefreshing(true);
+        // Add a small delay to ensure any database operations have completed
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
       const progressData = await getUserProgressWithSettings();
       setProgress(progressData);
     } catch (error) {
       console.error('Error loading progress:', error);
+    } finally {
+      if (forceRefresh) {
+        setIsRefreshing(false);
+      }
     }
   }, []);
 
   // Use useFocusEffect to ensure progress is refreshed every time screen is focused
   useFocusEffect(
     useCallback(() => {
-      loadProgress();
+      loadProgress(true); // Force refresh when screen gains focus
     }, [loadProgress])
   );
 
@@ -103,8 +113,17 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.quickStatsTitle}>Today's Learning</Text>
             <View style={styles.dueWordsContainer}>
               <Ionicons name="today" size={32} color="rgba(255,255,255,0.9)" />
-              <Text style={styles.dueWordsNumber}>{progress.dueToday}</Text>
-              <Text style={styles.dueWordsLabel}>words due today</Text>
+              {isRefreshing ? (
+                <View style={styles.refreshingContainer}>
+                  <Ionicons name="sync" size={20} color="rgba(255,255,255,0.7)" />
+                  <Text style={styles.refreshingText}>updating...</Text>
+                </View>
+              ) : (
+                <>
+                  <Text style={styles.dueWordsNumber}>{progress.dueToday}</Text>
+                  <Text style={styles.dueWordsLabel}>words due today</Text>
+                </>
+              )}
             </View>
           </View>
         </ScrollView>
@@ -224,5 +243,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center',
+  },
+  refreshingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 8,
+  },
+  refreshingText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginLeft: 6,
+    fontStyle: 'italic',
   },
 }); 
