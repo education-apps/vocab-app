@@ -14,7 +14,7 @@
     "@react-navigation/native": "^7.1.10",
     "@react-navigation/stack": "^7.3.3",
     "expo": "~53.0.9",
-    "expo-audio": "^0.4.6",
+    "expo-audio": "~0.4.6",
     "expo-video": "^2.2.1",
     "expo-linear-gradient": "^14.1.4",
     "expo-speech": "^13.1.7",

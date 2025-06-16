@@ -19,8 +19,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/abase_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/abase_pronunciation",
-    "definition_audio": "path/to/audio/abase_definition"
+    "pronunciation_audio": "assets/audio/Abase.mp3",
+    "definition_audio": "assets/audio/Abase.mp3"
   },
   {
     "id": 2,
@@ -39,8 +39,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/adulterate_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/adulterate_pronunciation",
-    "definition_audio": "path/to/audio/adulterate_definition"
+    "pronunciation_audio": "assets/audio/Adulterate.mp3",
+    "definition_audio": "assets/audio/Adulterate.mp3"
   },
   {
     "id": 3,
@@ -59,8 +59,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/ancillary_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/ancillary_pronunciation",
-    "definition_audio": "path/to/audio/ancillary_definition"
+    "pronunciation_audio": "assets/audio/Ancillary.mp3",
+    "definition_audio": "assets/audio/Ancillary.mp3"
   },
   {
     "id": 4,
@@ -79,8 +79,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/assuage_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/assuage_pronunciation",
-    "definition_audio": "path/to/audio/assuage_definition"
+    "pronunciation_audio": "assets/audio/Assuage.mp3",
+    "definition_audio": "assets/audio/Assuage.mp3"
   },
   {
     "id": 5,
@@ -99,8 +99,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/boisterous_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/boisterous_pronunciation",
-    "definition_audio": "path/to/audio/boisterous_definition"
+    "pronunciation_audio": "assets/audio/Boisterous.mp3",
+    "definition_audio": "assets/audio/Boisterous.mp3"
   },
   {
     "id": 6,
@@ -119,8 +119,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/circumspect_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/circumspect_pronunciation",
-    "definition_audio": "path/to/audio/circumspect_definition"
+    "pronunciation_audio": "assets/audio/Circumspect.mp3",
+    "definition_audio": "assets/audio/Circumspect.mp3"
   },
   {
     "id": 7,
@@ -139,8 +139,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/contravene_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/contravene_pronunciation",
-    "definition_audio": "path/to/audio/contravene_definition"
+    "pronunciation_audio": "assets/audio/Contravene.mp3",
+    "definition_audio": "assets/audio/Contravene.mp3"
   },
   {
     "id": 8,
@@ -159,8 +159,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/deficient_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/deficient_pronunciation",
-    "definition_audio": "path/to/audio/deficient_definition"
+    "pronunciation_audio": "assets/audio/Deficient.mp3",
+    "definition_audio": "assets/audio/Deficient.mp3"
   },
   {
     "id": 9,
@@ -179,8 +179,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/disparate_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/disparate_pronunciation",
-    "definition_audio": "path/to/audio/disparate_definition"
+    "pronunciation_audio": "assets/audio/Disparate.mp3",
+    "definition_audio": "assets/audio/Disparate.mp3"
   },
   {
     "id": 10,
@@ -199,8 +199,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/emancipate_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/emancipate_pronunciation",
-    "definition_audio": "path/to/audio/emancipate_definition"
+    "pronunciation_audio": "assets/audio/Emancipate.mp3",
+    "definition_audio": "assets/audio/Emancipate.mp3"
   },
   {
     "id": 11,
@@ -219,8 +219,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/espionage_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/espionage_pronunciation",
-    "definition_audio": "path/to/audio/espionage_definition"
+    "pronunciation_audio": "assets/audio/Espionage.mp3",
+    "definition_audio": "assets/audio/Espionage.mp3"
   },
   {
     "id": 12,
@@ -239,8 +239,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/feasible_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/feasible_pronunciation",
-    "definition_audio": "path/to/audio/feasible_definition"
+    "pronunciation_audio": "assets/audio/Feasible.mp3",
+    "definition_audio": "assets/audio/Feasible.mp3"
   },
   {
     "id": 13,
@@ -259,8 +259,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/glib_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/glib_pronunciation",
-    "definition_audio": "path/to/audio/glib_definition"
+    "pronunciation_audio": "assets/audio/Glib.mp3",
+    "definition_audio": "assets/audio/Glib.mp3"
   },
   {
     "id": 14,
@@ -279,8 +279,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/hubris_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/hubris_pronunciation",
-    "definition_audio": "path/to/audio/hubris_definition"
+    "pronunciation_audio": "assets/audio/Hubris.mp3",
+    "definition_audio": "assets/audio/Hubris.mp3"
   },
   {
     "id": 15,
@@ -299,8 +299,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/impugn_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/impugn_pronunciation",
-    "definition_audio": "path/to/audio/impugn_definition"
+    "pronunciation_audio": "assets/audio/Impugn.mp3",
+    "definition_audio": "assets/audio/Impugn.mp3"
   },
   {
     "id": 16,
@@ -319,8 +319,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/ingratiate_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/ingratiate_pronunciation",
-    "definition_audio": "path/to/audio/ingratiate_definition"
+    "pronunciation_audio": "assets/audio/Ingratiate.mp3",
+    "definition_audio": "assets/audio/Ingratiate.mp3"
   },
   {
     "id": 17,
@@ -339,8 +339,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/irrelevant_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/irrelevant_pronunciation",
-    "definition_audio": "path/to/audio/irrelevant_definition"
+    "pronunciation_audio": "assets/audio/Irrelevant.mp3",
+    "definition_audio": "assets/audio/Irrelevant.mp3"
   },
   {
     "id": 18,
@@ -359,8 +359,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/listless_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/listless_pronunciation",
-    "definition_audio": "path/to/audio/listless_definition"
+    "pronunciation_audio": "assets/audio/Listless.mp3",
+    "definition_audio": "assets/audio/Listless.mp3"
   },
   {
     "id": 19,
@@ -379,8 +379,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/mettle_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/mettle_pronunciation",
-    "definition_audio": "path/to/audio/mettle_definition"
+    "pronunciation_audio": "assets/audio/Mettle.mp3",
+    "definition_audio": "assets/audio/Mettle.mp3"
   },
   {
     "id": 20,
@@ -399,8 +399,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/numinous_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/numinous_pronunciation",
-    "definition_audio": "path/to/audio/numinous_definition"
+    "pronunciation_audio": "assets/audio/Numinous.mp3",
+    "definition_audio": "assets/audio/Numinous.mp3"
   },
   {
     "id": 21,
@@ -419,8 +419,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/panegyric_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/panegyric_pronunciation",
-    "definition_audio": "path/to/audio/panegyric_definition"
+    "pronunciation_audio": "assets/audio/Panegyric.mp3",
+    "definition_audio": "assets/audio/Panegyric.mp3"
   },
   {
     "id": 22,
@@ -439,8 +439,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/philanthropy_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/philanthropy_pronunciation",
-    "definition_audio": "path/to/audio/philanthropy_definition"
+    "pronunciation_audio": "assets/audio/Philanthropy.mp3",
+    "definition_audio": "assets/audio/Philanthropy.mp3"
   },
   {
     "id": 23,
@@ -459,8 +459,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/prestigious_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/prestigious_pronunciation",
-    "definition_audio": "path/to/audio/prestigious_definition"
+    "pronunciation_audio": "assets/audio/Prestigious.mp3",
+    "definition_audio": "assets/audio/Prestigious.mp3"
   },
   {
     "id": 24,
@@ -479,8 +479,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/putrefy_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/putrefy_pronunciation",
-    "definition_audio": "path/to/audio/putrefy_definition"
+    "pronunciation_audio": "assets/audio/Putrefy.mp3",
+    "definition_audio": "assets/audio/Putrefy.mp3"
   },
   {
     "id": 25,
@@ -499,8 +499,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/replete_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/replete_pronunciation",
-    "definition_audio": "path/to/audio/replete_definition"
+    "pronunciation_audio": "assets/audio/Replete.mp3",
+    "definition_audio": "assets/audio/Replete.mp3"
   },
   {
     "id": 26,
@@ -519,8 +519,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/sardonic_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/sardonic_pronunciation",
-    "definition_audio": "path/to/audio/sardonic_definition"
+    "pronunciation_audio": "assets/audio/Sardonic.mp3",
+    "definition_audio": "assets/audio/Sardonic.mp3"
   },
   {
     "id": 27,
@@ -539,8 +539,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/squalor_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/squalor_pronunciation",
-    "definition_audio": "path/to/audio/squalor_definition"
+    "pronunciation_audio": "assets/audio/Squalor.mp3",
+    "definition_audio": "assets/audio/Squalor.mp3"
   },
   {
     "id": 28,
@@ -559,8 +559,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/surpass_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/surpass_pronunciation",
-    "definition_audio": "path/to/audio/surpass_definition"
+    "pronunciation_audio": "assets/audio/Surpass.mp3",
+    "definition_audio": "assets/audio/Surpass.mp3"
   },
   {
     "id": 29,
@@ -579,8 +579,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/treatise_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/treatise_pronunciation",
-    "definition_audio": "path/to/audio/treatise_definition"
+    "pronunciation_audio": "assets/audio/Treatise.mp3",
+    "definition_audio": "assets/audio/Treatise.mp3"
   },
   {
     "id": 30,
@@ -599,8 +599,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/verbose_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/verbose_pronunciation",
-    "definition_audio": "path/to/audio/verbose_definition"
+    "pronunciation_audio": "assets/audio/Verbose.mp3",
+    "definition_audio": "assets/audio/Verbose.mp3"
   },
   {
     "id": 31,
@@ -619,8 +619,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/abate_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/abate_pronunciation",
-    "definition_audio": "path/to/audio/abate_definition"
+    "pronunciation_audio": "assets/audio/Abate.mp3",
+    "definition_audio": "assets/audio/Abate.mp3"
   },
   {
     "id": 32,
@@ -639,8 +639,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/adversary_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/adversary_pronunciation",
-    "definition_audio": "path/to/audio/adversary_definition"
+    "pronunciation_audio": "assets/audio/Adversary.mp3",
+    "definition_audio": "assets/audio/Adversary.mp3"
   },
   {
     "id": 33,
@@ -659,8 +659,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/anecdote_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/anecdote_pronunciation",
-    "definition_audio": "path/to/audio/anecdote_definition"
+    "pronunciation_audio": "assets/audio/Anecdote.mp3",
+    "definition_audio": "assets/audio/Anecdote.mp3"
   },
   {
     "id": 34,
@@ -679,8 +679,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/astute_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/astute_pronunciation",
-    "definition_audio": "path/to/audio/astute_definition"
+    "pronunciation_audio": "assets/audio/Astute.mp3",
+    "definition_audio": "assets/audio/Astute.mp3"
   },
   {
     "id": 35,
@@ -699,8 +699,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/bolster_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/bolster_pronunciation",
-    "definition_audio": "path/to/audio/bolster_definition"
+    "pronunciation_audio": "assets/audio/Bolster.mp3",
+    "definition_audio": "assets/audio/Bolster.mp3"
   },
   {
     "id": 36,
@@ -719,8 +719,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/circumstantial_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/circumstantial_pronunciation",
-    "definition_audio": "path/to/audio/circumstantial_definition"
+    "pronunciation_audio": "assets/audio/Circumstantial.mp3",
+    "definition_audio": "assets/audio/Circumstantial.mp3"
   },
   {
     "id": 37,
@@ -739,8 +739,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/contrite_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/contrite_pronunciation",
-    "definition_audio": "path/to/audio/contrite_definition"
+    "pronunciation_audio": "assets/audio/Contrite.mp3",
+    "definition_audio": "assets/audio/Contrite.mp3"
   },
   {
     "id": 38,
@@ -759,8 +759,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/dissonance_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/dissonance_pronunciation",
-    "definition_audio": "path/to/audio/dissonance_definition"
+    "pronunciation_audio": "assets/audio/Dissonance.mp3",
+    "definition_audio": "assets/audio/Dissonance.mp3"
   },
   {
     "id": 39,
@@ -779,8 +779,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/disparate_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/disparate_pronunciation",
-    "definition_audio": "path/to/audio/disparate_definition"
+    "pronunciation_audio": "assets/audio/Disparate.mp3",
+    "definition_audio": "assets/audio/Disparate.mp3"
   },
   {
     "id": 40,
@@ -799,8 +799,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/emasculate_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/emasculate_pronunciation",
-    "definition_audio": "path/to/audio/emasculate_definition"
+    "pronunciation_audio": "assets/audio/Emasculate.mp3",
+    "definition_audio": "assets/audio/Emasculate.mp3"
   },
   {
     "id": 41,
@@ -819,8 +819,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/esteem_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/esteem_pronunciation",
-    "definition_audio": "path/to/audio/esteem_definition"
+    "pronunciation_audio": "assets/audio/Esteem.mp3",
+    "definition_audio": "assets/audio/Esteem.mp3"
   },
   {
     "id": 42,
@@ -839,8 +839,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/fecund_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/fecund_pronunciation",
-    "definition_audio": "path/to/audio/fecund_definition"
+    "pronunciation_audio": "assets/audio/Fecund.mp3",
+    "definition_audio": "assets/audio/Fecund.mp3"
   },
   {
     "id": 43,
@@ -859,8 +859,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/gluttonous_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/gluttonous_pronunciation",
-    "definition_audio": "path/to/audio/gluttonous_definition"
+    "pronunciation_audio": "assets/audio/Gluttonous.mp3",
+    "definition_audio": "assets/audio/Gluttonous.mp3"
   },
   {
     "id": 44,
@@ -879,8 +879,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/hyperbole_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/hyperbole_pronunciation",
-    "definition_audio": "path/to/audio/hyperbole_definition"
+    "pronunciation_audio": "assets/audio/Hyperbole.mp3",
+    "definition_audio": "assets/audio/Hyperbole.mp3"
   },
   {
     "id": 45,
@@ -899,8 +899,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/impunity_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/impunity_pronunciation",
-    "definition_audio": "path/to/audio/impunity_definition"
+    "pronunciation_audio": "assets/audio/Impunity.mp3",
+    "definition_audio": "assets/audio/Impunity.mp3"
   },
   {
     "id": 46,
@@ -919,8 +919,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/inimical_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/inimical_pronunciation",
-    "definition_audio": "path/to/audio/inimical_definition"
+    "pronunciation_audio": "assets/audio/Inimical.mp3",
+    "definition_audio": "assets/audio/Inimical.mp3"
   },
   {
     "id": 47,
@@ -939,8 +939,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/irremediable_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/irremediable_pronunciation",
-    "definition_audio": "path/to/audio/irremediable_definition"
+    "pronunciation_audio": "assets/audio/Irremediable.mp3",
+    "definition_audio": "assets/audio/Irremediable.mp3"
   },
   {
     "id": 48,
@@ -959,8 +959,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/lithe_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/lithe_pronunciation",
-    "definition_audio": "path/to/audio/lithe_definition"
+    "pronunciation_audio": "assets/audio/Lithe.mp3",
+    "definition_audio": "assets/audio/Lithe.mp3"
   },
   {
     "id": 49,
@@ -979,8 +979,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/migrate_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/migrate_pronunciation",
-    "definition_audio": "path/to/audio/migrate_definition"
+    "pronunciation_audio": "assets/audio/Migrate.mp3",
+    "definition_audio": "assets/audio/Migrate.mp3"
   },
   {
     "id": 50,
@@ -999,8 +999,8 @@ export const vocabularyWords = [
         "sentence_audio": "path/to/audio/nymph_formal_sentence"
       }
     },
-    "pronunciation_audio": "path/to/audio/nymph_pronunciation",
-    "definition_audio": "path/to/audio/nymph_definition"
+    "pronunciation_audio": "assets/audio/Nymph.mp3",
+    "definition_audio": "assets/audio/Nymph.mp3"
   },
   {
     "id": 51,

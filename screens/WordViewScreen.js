@@ -11,11 +11,12 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import * as Audio from 'expo-audio';
+import { useAudioPlayer } from 'expo-audio';
 import * as Speech from 'expo-speech';
 
 import { getDueWordsForReview, processFsrsReview, getSettings } from '../utils/storage.js';
-import { Grade } from '../utils/fsrs.js';
+import { Grade, getNextIntervals } from '../utils/fsrs.js';
+import { wordAudioFiles } from '../utils/audio.js';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -26,6 +27,14 @@ export default function WordViewScreen({ navigation }) {
   const [showDefinition, setShowDefinition] = useState(false);
   const [currentMode, setCurrentMode] = useState('humorous'); // 'humorous' or 'formal'
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [nextIntervals, setNextIntervals] = useState({});
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  
+  // Initialize audio player with null check
+  const audioPlayer = useAudioPlayer();
+
+  // Combined state for any audio playing (either TTS or pre-recorded)
+  const isAnyAudioPlaying = isSpeaking || isPlayingAudio;
 
   useEffect(() => {
     loadData();
@@ -42,15 +51,63 @@ export default function WordViewScreen({ navigation }) {
         await Speech.stop();
         setIsSpeaking(false);
       }
+      // Stop any ongoing audio when leaving the screen
+      if (audioPlayer && audioPlayer.playing) {
+        try {
+          audioPlayer.pause();
+          setIsPlayingAudio(false);
+        } catch (error) {
+          console.warn('Error pausing audio on blur:', error);
+          setIsPlayingAudio(false);
+        }
+      }
     });
     
     return () => {
       // Stop any ongoing speech when component unmounts
       Speech.stop();
+      // Stop any ongoing audio when component unmounts
+      if (audioPlayer) {
+        try {
+          if (audioPlayer.playing) {
+            audioPlayer.pause();
+          }
+        } catch (error) {
+          console.warn('Error cleaning up audio player:', error);
+        }
+      }
       unsubscribeFocus();
       unsubscribeBlur();
     };
   }, [navigation]);
+
+  // Monitor audio player status with proper error handling
+  useEffect(() => {
+    if (!audioPlayer) return;
+
+    const interval = setInterval(() => {
+      try {
+        // Only check if we think audio should be playing
+        if (isPlayingAudio && audioPlayer && typeof audioPlayer.playing !== 'undefined') {
+          const currentlyPlaying = audioPlayer.playing;
+          if (currentlyPlaying !== isPlayingAudio) {
+            setIsPlayingAudio(currentlyPlaying);
+          }
+        } else if (isPlayingAudio) {
+          // If we think audio is playing but can't verify, assume it stopped
+          setIsPlayingAudio(false);
+        }
+      } catch (error) {
+        // Only log if we were expecting audio to be playing
+        if (isPlayingAudio) {
+          console.warn('Audio player disconnected, stopping playback');
+        }
+        setIsPlayingAudio(false);
+      }
+    }, 300); // Slightly longer interval
+
+    return () => clearInterval(interval);
+  }, [audioPlayer, isPlayingAudio]);
 
   const loadData = async () => {
     try {
@@ -99,13 +156,52 @@ export default function WordViewScreen({ navigation }) {
     }
   };
 
-  const playAudio = async (audioPath) => {
+  const handlePlayPronunciation = async () => {
+    const word = words[currentIndex]?.word;
+    if (!word) return;
+
     try {
-      console.log('Playing audio:', audioPath);
-      // For now, just log the audio path since we don't have actual audio files
-      Alert.alert('Audio', `Playing: ${audioPath}`);
+      // Stop any currently playing speech
+      if (isSpeaking) {
+        await Speech.stop();
+        setIsSpeaking(false);
+        return;
+      }
+
+      // Stop any currently playing audio
+      if (isPlayingAudio) {
+        if (audioPlayer) {
+          try {
+            audioPlayer.pause();
+            audioPlayer.seekTo(0);
+          } catch (error) {
+            // Silently handle audio player errors during stop
+          }
+        }
+        setIsPlayingAudio(false);
+        return;
+      }
+
+      // Try to play pre-recorded audio first
+      if (wordAudioFiles[word] && audioPlayer) {
+        try {
+          const audioSource = wordAudioFiles[word];
+          audioPlayer.replace(audioSource);
+          audioPlayer.play();
+          setIsPlayingAudio(true);
+        } catch (error) {
+          console.log('Using TTS fallback for:', word);
+          // Fallback to TTS if audio fails
+          speakText(word, { rate: 0.6, pitch: 1.1 });
+        }
+      } else {
+        // Fallback to TTS
+        speakText(word, { rate: 0.6, pitch: 1.1 });
+      }
     } catch (error) {
-      console.error('Error playing audio:', error);
+      console.log('Using TTS fallback due to error for:', word);
+      // Fallback to TTS if anything fails
+      speakText(word, { rate: 0.6, pitch: 1.1 });
     }
   };
 
@@ -116,6 +212,19 @@ export default function WordViewScreen({ navigation }) {
         await Speech.stop();
         setIsSpeaking(false);
         return;
+      }
+
+      // Stop any currently playing audio
+      if (isPlayingAudio) {
+        if (audioPlayer) {
+          try {
+            audioPlayer.pause();
+            audioPlayer.seekTo(0);
+          } catch (error) {
+            // Silently handle audio player errors during stop
+          }
+        }
+        setIsPlayingAudio(false);
       }
       
       // Default speech options
@@ -141,6 +250,13 @@ export default function WordViewScreen({ navigation }) {
 
   const handleShowDefinition = () => {
     setShowDefinition(true);
+    
+    // Calculate next intervals for this word when definition is shown
+    const currentWord = words[currentIndex];
+    if (currentWord) {
+      const intervals = getNextIntervals(currentWord);
+      setNextIntervals(intervals);
+    }
   };
 
   const handleFsrsGrade = async (grade) => {
@@ -167,6 +283,7 @@ export default function WordViewScreen({ navigation }) {
       if (currentIndex < words.length - 1) {
         setCurrentIndex(currentIndex + 1);
         setShowDefinition(false); // Reset for next word
+        setNextIntervals({}); // Reset intervals for next word
       } else {
         // Finished all words
         Alert.alert(
@@ -182,6 +299,7 @@ export default function WordViewScreen({ navigation }) {
               onPress: () => {
                 setCurrentIndex(0);
                 setShowDefinition(false);
+                setNextIntervals({});
               },
             },
           ]
@@ -266,15 +384,15 @@ export default function WordViewScreen({ navigation }) {
             <View style={styles.wordHeader}>
               <View style={styles.wordTitleContainer}>
                 <Text style={styles.word}>{currentWord.word}</Text>
-                <TouchableOpacity 
-                  style={[styles.audioButton, isSpeaking && styles.audioButtonActive]}
-                  onPress={() => speakText(currentWord.word, { rate: 0.6, pitch: 1.1 })}
+                <TouchableOpacity
+                  style={[styles.audioButton, isAnyAudioPlaying && styles.audioButtonActive]}
+                  onPress={handlePlayPronunciation}
                   activeOpacity={0.7}
                 >
-                  <Ionicons 
-                    name={isSpeaking ? "stop" : "volume-high"} 
-                    size={24} 
-                    color={isSpeaking ? "#fff" : "#6366f1"} 
+                  <Ionicons
+                    name={isAnyAudioPlaying ? "stop" : "volume-high"}
+                    size={24}
+                    color={isAnyAudioPlaying ? "#fff" : "#6366f1"}
                   />
                 </TouchableOpacity>
               </View>
@@ -322,14 +440,14 @@ export default function WordViewScreen({ navigation }) {
                   <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Definition</Text>
                     <TouchableOpacity 
-                      style={[styles.audioButtonSmall, isSpeaking && styles.audioButtonSmallActive]}
+                      style={[styles.audioButtonSmall, isAnyAudioPlaying && styles.audioButtonSmallActive]}
                       onPress={() => speakText(currentWord.definition, { rate: 0.8 })}
                       activeOpacity={0.7}
                     >
                       <Ionicons 
-                        name={isSpeaking ? "stop" : "volume-high"} 
+                        name={isAnyAudioPlaying ? "stop" : "volume-high"} 
                         size={18} 
-                        color={isSpeaking ? "#fff" : "#6366f1"} 
+                        color={isAnyAudioPlaying ? "#fff" : "#6366f1"} 
                       />
                     </TouchableOpacity>
                   </View>
@@ -341,15 +459,15 @@ export default function WordViewScreen({ navigation }) {
                   <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Example ({currentMode})</Text>
                     {modeData && (
-                                              <TouchableOpacity 
-                        style={[styles.audioButtonSmall, isSpeaking && styles.audioButtonSmallActive]}
+                      <TouchableOpacity 
+                        style={[styles.audioButtonSmall, isAnyAudioPlaying && styles.audioButtonSmallActive]}
                         onPress={() => speakText(modeData.sentence, { rate: 0.85 })}
                         activeOpacity={0.7}
                       >
                         <Ionicons 
-                          name={isSpeaking ? "stop" : "volume-high"} 
+                          name={isAnyAudioPlaying ? "stop" : "volume-high"} 
                           size={18} 
-                          color={isSpeaking ? "#fff" : "#6366f1"} 
+                          color={isAnyAudioPlaying ? "#fff" : "#6366f1"} 
                         />
                       </TouchableOpacity>
                     )}
@@ -368,7 +486,7 @@ export default function WordViewScreen({ navigation }) {
                       onPress={() => handleFsrsGrade(Grade.FORGOT)}
                       activeOpacity={0.8}
                     >
-                      <Ionicons name="close" size={20} color="white" />
+                      <Text style={styles.fsrsIntervalText}>{nextIntervals[Grade.FORGOT] || '~10 min'}</Text>
                       <Text style={styles.fsrsButtonText}>Forgot</Text>
                     </TouchableOpacity>
 
@@ -377,7 +495,7 @@ export default function WordViewScreen({ navigation }) {
                       onPress={() => handleFsrsGrade(Grade.HARD)}
                       activeOpacity={0.8}
                     >
-                      <Ionicons name="remove" size={20} color="white" />
+                      <Text style={styles.fsrsIntervalText}>{nextIntervals[Grade.HARD] || '~6 hours'}</Text>
                       <Text style={styles.fsrsButtonText}>Hard</Text>
                     </TouchableOpacity>
 
@@ -386,7 +504,7 @@ export default function WordViewScreen({ navigation }) {
                       onPress={() => handleFsrsGrade(Grade.GOOD)}
                       activeOpacity={0.8}
                     >
-                      <Ionicons name="checkmark" size={20} color="white" />
+                      <Text style={styles.fsrsIntervalText}>{nextIntervals[Grade.GOOD] || '~1 day'}</Text>
                       <Text style={styles.fsrsButtonText}>Good</Text>
                     </TouchableOpacity>
 
@@ -395,7 +513,7 @@ export default function WordViewScreen({ navigation }) {
                       onPress={() => handleFsrsGrade(Grade.EASY)}
                       activeOpacity={0.8}
                     >
-                      <Ionicons name="star" size={20} color="white" />
+                      <Text style={styles.fsrsIntervalText}>{nextIntervals[Grade.EASY] || '~4 days'}</Text>
                       <Text style={styles.fsrsButtonText}>Easy</Text>
                     </TouchableOpacity>
                   </View>
@@ -676,5 +794,13 @@ const styles = StyleSheet.create({
     color: 'white',
     marginBottom: 2,
     textAlign: 'center',
+  },
+  fsrsIntervalText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'white',
+    marginBottom: 4,
+    textAlign: 'center',
+    opacity: 0.9,
   },
 }); 

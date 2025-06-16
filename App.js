@@ -12,7 +12,7 @@ import ProgressScreen from './screens/ProgressScreen';
 import SettingsScreen from './screens/SettingsScreen';
 
 // Import utilities
-import { initializeVocabularyData } from './utils/storage';
+import { initializeVocabularyData, resetToFreshISEEVocabulary } from './utils/storage';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
