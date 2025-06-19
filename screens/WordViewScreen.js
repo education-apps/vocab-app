@@ -288,19 +288,11 @@ export default function WordViewScreen({ navigation }) {
         // Finished all words
         Alert.alert(
           'Great Job!',
-          'You\'ve reviewed all the vocabulary words! 🎉',
+          'You\'ve reviewed all your vocabulary words for today! 🎉',
           [
             {
               text: 'Go Home',
               onPress: () => navigation.goBack(),
-            },
-            {
-              text: 'Review Again',
-              onPress: () => {
-                setCurrentIndex(0);
-                setShowDefinition(false);
-                setNextIntervals({});
-              },
             },
           ]
         );

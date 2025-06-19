@@ -22,7 +22,6 @@ export default function ProgressScreen({ navigation }) {
     totalReviews: 0,
     averageReviews: 0,
     retentionRate: 0,
-    accuracy: 0,
     scheduledReviews: 0,
     allocatedNewWords: 0,
   });
@@ -96,45 +95,6 @@ export default function ProgressScreen({ navigation }) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Overall Statistics */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Overall Statistics</Text>
-          
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <View style={styles.statIconContainer}>
-                <Ionicons name="library" size={32} color="#6366f1" />
-              </View>
-              <Text style={styles.statNumber}>{progress.totalWords}</Text>
-              <Text style={styles.statLabel}>Total Words</Text>
-            </View>
-
-            <View style={styles.statCard}>
-              <View style={styles.statIconContainer}>
-                <Ionicons name="checkmark-circle" size={32} color="#10b981" />
-              </View>
-              <Text style={styles.statNumber}>{progress.reviewedWords}</Text>
-              <Text style={styles.statLabel}>Words Learned</Text>
-            </View>
-
-            <View style={styles.statCard}>
-              <View style={styles.statIconContainer}>
-                <Ionicons name="trending-up" size={32} color="#8b5cf6" />
-              </View>
-              <Text style={styles.statNumber}>{progress.accuracy}%</Text>
-              <Text style={styles.statLabel}>Accuracy</Text>
-            </View>
-
-            <View style={styles.statCard}>
-              <View style={styles.statIconContainer}>
-                <Ionicons name="refresh-circle" size={32} color="#f59e0b" />
-              </View>
-              <Text style={styles.statNumber}>{progress.dueToday}</Text>
-              <Text style={styles.statLabel}>Due Today</Text>
-            </View>
-          </View>
-        </View>
-
         {/* Progress Breakdown */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Progress Breakdown</Text>
@@ -350,33 +310,7 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     marginBottom: 16,
   },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  statCard: {
-    width: '48%',
-    alignItems: 'center',
-    paddingVertical: 20,
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  statIconContainer: {
-    marginBottom: 12,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
+
   progressBreakdown: {
     marginBottom: 20,
   },
