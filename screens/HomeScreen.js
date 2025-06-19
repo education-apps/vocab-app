@@ -23,6 +23,8 @@ export default function HomeScreen({ navigation }) {
     reviewedWords: 0,
     totalReviews: 0,
     accuracy: 0,
+    scheduledReviews: 0,
+    allocatedNewWords: 0,
   });
 
   useEffect(() => {
@@ -103,6 +105,13 @@ export default function HomeScreen({ navigation }) {
               <Ionicons name="today" size={32} color="rgba(255,255,255,0.9)" />
               <Text style={styles.dueWordsNumber}>{progress.dueToday}</Text>
               <Text style={styles.dueWordsLabel}>words due today</Text>
+            </View>
+            
+            {/* New vs Review Words Breakdown */}
+            <View style={styles.wordsBreakdown}>
+              <Text style={styles.breakdownText}>
+                {progress.allocatedNewWords || 0} new + {progress.scheduledReviews || 0} review
+              </Text>
             </View>
           </View>
         </ScrollView>
@@ -221,6 +230,15 @@ const styles = StyleSheet.create({
   dueWordsLabel: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+  },
+  wordsBreakdown: {
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  breakdownText: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.7)',
     textAlign: 'center',
   },
 }); 

@@ -23,6 +23,8 @@ export default function ProgressScreen({ navigation }) {
     averageReviews: 0,
     retentionRate: 0,
     accuracy: 0,
+    scheduledReviews: 0,
+    allocatedNewWords: 0,
   });
   const [recentWords, setRecentWords] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -223,6 +225,32 @@ export default function ProgressScreen({ navigation }) {
               <Ionicons name="calendar-sharp" size={24} color="#a855f7" />
               <Text style={styles.spacedRepetitionNumber}>{progress.dueThisWeek}</Text>
               <Text style={styles.spacedRepetitionLabel}>Due This Week</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Today's Due Words Breakdown */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Today's Due Words Breakdown</Text>
+          <Text style={styles.sectionSubtitle}>New words vs review words</Text>
+          
+          <View style={styles.todayBreakdownGrid}>
+            <View style={styles.todayBreakdownCard}>
+              <Ionicons name="add-circle" size={28} color="#10b981" />
+              <Text style={styles.todayBreakdownNumber}>{progress.allocatedNewWords || 0}</Text>
+              <Text style={styles.todayBreakdownLabel}>New Words</Text>
+            </View>
+
+            <View style={styles.todayBreakdownCard}>
+              <Ionicons name="refresh-circle" size={28} color="#f59e0b" />
+              <Text style={styles.todayBreakdownNumber}>{progress.scheduledReviews || 0}</Text>
+              <Text style={styles.todayBreakdownLabel}>Reviews</Text>
+            </View>
+
+            <View style={styles.todayBreakdownCard}>
+              <Ionicons name="calendar-outline" size={28} color="#6366f1" />
+              <Text style={styles.todayBreakdownNumber}>{progress.dueToday}</Text>
+              <Text style={styles.todayBreakdownLabel}>Total Due</Text>
             </View>
           </View>
         </View>
@@ -471,5 +499,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: 'white',
+  },
+  todayBreakdownGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  todayBreakdownCard: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 16,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    marginHorizontal: 4,
+  },
+  todayBreakdownNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginVertical: 8,
+  },
+  todayBreakdownLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    textAlign: 'center',
   },
 }); 
