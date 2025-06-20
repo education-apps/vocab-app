@@ -167,16 +167,18 @@ export const allocateNewWordsForToday = async (dailyNewWordsLimit) => {
   }
 };
 
-// Get due words for review - optimized query with daily new words limit
+// Get due words for review - optimized query with daily new words limit and intelligent short-interval handling
 export const getDueWords = async (dailyNewWordsLimit = 20) => {
   try {
     const database = await db;
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const now = new Date();
+    const nowISO = now.toISOString(); // Current time as ISO string for consistent comparison
     
     // First, ensure we have allocated new words for today
     await allocateNewWordsForToday(dailyNewWordsLimit);
     
-    // Get all scheduled review words (no limit on these)
+    // Get all scheduled review words that are actually due now (no limit on these)
     const reviewWords = await database.getAllAsync(`
       SELECT 
         v.*,
@@ -185,9 +187,9 @@ export const getDueWords = async (dailyNewWordsLimit = 20) => {
         f.lapses, f.state, f.learning_steps
       FROM vocabulary v
       LEFT JOIN fsrs_data f ON v.id = f.word_id
-      WHERE f.next_review_date <= datetime('now') AND f.review_count > 0
+      WHERE f.next_review_date <= ? AND f.review_count > 0
       ORDER BY f.next_review_date ASC
-    `);
+    `, [nowISO]);
     
     // Get today's allocated new words that haven't been reviewed yet
     const allocatedNewWords = await database.getAllAsync(`
@@ -205,7 +207,30 @@ export const getDueWords = async (dailyNewWordsLimit = 20) => {
     `, [today]);
     
     // Combine review words and allocated new words
-    const allDueWords = [...reviewWords, ...allocatedNewWords];
+    let allDueWords = [...reviewWords, ...allocatedNewWords];
+    
+    // If we have no words to review, check for short-interval words (under 1 day)
+    if (allDueWords.length === 0) {
+      const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours from now
+      const oneDayFromNowISO = oneDayFromNow.toISOString();
+      
+      const shortIntervalWords = await database.getAllAsync(`
+        SELECT 
+          v.*,
+          f.stability, f.difficulty, f.last_review_date, f.next_review_date,
+          f.review_count, f.last_grade, f.elapsed_days, f.scheduled_days,
+          f.lapses, f.state, f.learning_steps
+        FROM vocabulary v
+        LEFT JOIN fsrs_data f ON v.id = f.word_id
+        WHERE f.next_review_date > ? 
+          AND f.next_review_date <= ? 
+          AND f.review_count > 0
+        ORDER BY f.next_review_date ASC
+        LIMIT 20
+      `, [nowISO, oneDayFromNowISO]);
+      
+      allDueWords = shortIntervalWords;
+    }
     
     return allDueWords.map(row => formatWordFromRow(row));
   } catch (error) {
@@ -230,5 +255,38 @@ export const cleanupOldAllocations = async () => {
     console.log('Old daily allocations cleaned up');
   } catch (error) {
     console.error('Error cleaning up old allocations:', error);
+  }
+};
+
+// Get words that have become due since the session started (for dynamic review updates)
+export const getNewlyDueWords = async (sessionStartTime) => {
+  try {
+    const database = await db;
+    const now = new Date();
+    const nowISO = now.toISOString();
+    const sessionStartISO = sessionStartTime.toISOString();
+    
+    // Get words that became due after the session started, or will be due within 1 day
+    const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const oneDayFromNowISO = oneDayFromNow.toISOString();
+    
+    const newlyDueWords = await database.getAllAsync(`
+      SELECT 
+        v.*,
+        f.stability, f.difficulty, f.last_review_date, f.next_review_date,
+        f.review_count, f.last_grade, f.elapsed_days, f.scheduled_days,
+        f.lapses, f.state, f.learning_steps
+      FROM vocabulary v
+      LEFT JOIN fsrs_data f ON v.id = f.word_id
+      WHERE f.next_review_date > ? 
+        AND f.next_review_date <= ? 
+        AND f.review_count > 0
+      ORDER BY f.next_review_date ASC
+    `, [sessionStartISO, nowISO]);
+    
+    return newlyDueWords.map(row => formatWordFromRow(row));
+  } catch (error) {
+    console.error('Error getting newly due words:', error);
+    return [];
   }
 }; 

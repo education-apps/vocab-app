@@ -63,18 +63,37 @@ export const updateFsrsData = async (wordId, fsrsData) => {
 export const getUserProgress = async (dailyNewWordsLimit = 20) => {
   try {
     const database = await db;
+    const now = new Date();
+    const nowISO = now.toISOString(); // Current time as ISO string for consistent comparison
     
-    // Get basic stats
+    // Calculate tomorrow's end time in JavaScript for consistency
+    const tomorrowEnd = new Date(now);
+    tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
+    tomorrowEnd.setHours(23, 59, 59, 999); // End of tomorrow
+    const tomorrowEndISO = tomorrowEnd.toISOString();
+    
+    // Calculate end of this week
+    const weekEnd = new Date(now);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    weekEnd.setHours(23, 59, 59, 999);
+    const weekEndISO = weekEnd.toISOString();
+    
+    // Calculate end of today
+    const todayEnd = new Date(now);
+    todayEnd.setHours(23, 59, 59, 999);
+    const todayEndISO = todayEnd.toISOString();
+    
+    // Get basic stats with JavaScript-consistent date comparisons
     const stats = await database.getFirstAsync(`
       SELECT 
         COUNT(*) as total_words,
-        SUM(CASE WHEN f.next_review_date > datetime('now') AND f.next_review_date <= datetime('now', '+1 day') THEN 1 ELSE 0 END) as due_tomorrow,
-        SUM(CASE WHEN f.next_review_date > datetime('now') AND f.next_review_date <= datetime('now', '+7 days') THEN 1 ELSE 0 END) as due_this_week,
+        SUM(CASE WHEN f.next_review_date > ? AND f.next_review_date <= ? THEN 1 ELSE 0 END) as due_tomorrow,
+        SUM(CASE WHEN f.next_review_date > ? AND f.next_review_date <= ? THEN 1 ELSE 0 END) as due_this_week,
         SUM(COALESCE(f.review_count, 0)) as total_reviews,
         COUNT(CASE WHEN f.review_count > 0 THEN 1 END) as reviewed_words
       FROM vocabulary v
       LEFT JOIN fsrs_data f ON v.id = f.word_id
-    `);
+    `, [todayEndISO, tomorrowEndISO, todayEndISO, weekEndISO]);
 
     // Calculate due today with daily allocation system
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
@@ -85,12 +104,12 @@ export const getUserProgress = async (dailyNewWordsLimit = 20) => {
     const dueStatsQuery = await database.getFirstAsync(`
       SELECT 
         -- Count scheduled review words (no limit)
-        SUM(CASE WHEN f.next_review_date <= datetime('now') AND f.review_count > 0 THEN 1 ELSE 0 END) as scheduled_reviews,
+        SUM(CASE WHEN f.next_review_date <= ? AND f.review_count > 0 THEN 1 ELSE 0 END) as scheduled_reviews,
         -- Count total new words available
         SUM(CASE WHEN (f.next_review_date IS NULL OR f.review_count = 0) THEN 1 ELSE 0 END) as total_new_words
       FROM vocabulary v
       LEFT JOIN fsrs_data f ON v.id = f.word_id
-    `);
+    `, [nowISO]);
 
     // Count today's allocated new words that haven't been reviewed yet
     const allocatedNewWordsQuery = await database.getFirstAsync(`

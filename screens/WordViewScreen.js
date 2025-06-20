@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayer } from 'expo-audio';
 import * as Speech from 'expo-speech';
 
-import { getDueWordsForReview, processFsrsReview, getSettings } from '../utils/storage.js';
+import { getDueWordsForReview, processFsrsReview, getSettings, getNewlyDueWords } from '../utils/storage.js';
 import { Grade, getNextIntervals } from '../utils/fsrs.js';
 import { wordAudioFiles } from '../utils/audio.js';
 
@@ -29,6 +29,12 @@ export default function WordViewScreen({ navigation }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [nextIntervals, setNextIntervals] = useState({});
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [sessionStartTime] = useState(new Date()); // Track when the session started
+  const [wordTypeCounts, setWordTypeCounts] = useState({
+    new: 0,
+    learning: 0, 
+    review: 0
+  });
   
   // Initialize audio player with null check
   const audioPlayer = useAudioPlayer();
@@ -137,9 +143,11 @@ export default function WordViewScreen({ navigation }) {
       if (wordList && wordList.length > 0) {
         setWords(wordList);
         setCurrentIndex(0);
+        setWordTypeCounts(calculateWordTypeCounts(wordList));
       } else {
         // No words available
         setWords([]);
+        setWordTypeCounts({ new: 0, learning: 0, review: 0 });
       }
     } catch (error) {
       console.error('Error loading words:', error);
@@ -154,6 +162,41 @@ export default function WordViewScreen({ navigation }) {
     } catch (error) {
       console.error('Error loading settings:', error);
     }
+  };
+
+  // Helper function to determine word type
+  const getWordType = (word) => {
+    if (!word.fsrs || word.fsrs.reviewCount === 0) {
+      return 'new';
+    }
+    
+    // Check if last reviewed today
+    const today = new Date().toISOString().split('T')[0];
+    const lastReviewDate = word.fsrs.lastReviewDate ? word.fsrs.lastReviewDate.split('T')[0] : null;
+    
+    if (lastReviewDate === today) {
+      return 'learning';
+    }
+    
+    return 'review';
+  };
+
+  // Helper function to calculate word type counts
+  const calculateWordTypeCounts = (wordList) => {
+    const counts = { new: 0, learning: 0, review: 0 };
+    
+    wordList.forEach(word => {
+      const type = getWordType(word);
+      counts[type]++;
+    });
+    
+    return counts;
+  };
+
+  // Helper function to get current word type
+  const getCurrentWordType = () => {
+    if (!words[currentIndex]) return 'new';
+    return getWordType(words[currentIndex]);
   };
 
   const handlePlayPronunciation = async () => {
@@ -267,11 +310,35 @@ export default function WordViewScreen({ navigation }) {
       // Process the review using real FSRS algorithm
       const reviewedWord = await processFsrsReview(currentWord.id, grade);
       
-      // Update local state
-      const updatedWords = words.map(word => 
-        word.id === currentWord.id ? reviewedWord : word
-      );
+      // Remove the current word from the list (it's been reviewed)
+      const remainingWords = words.filter((_, index) => index !== currentIndex);
+      
+      // Check if the reviewed word should be added back (short interval < 1 day)
+      const now = new Date();
+      const nextReviewDate = new Date(reviewedWord.fsrs.nextReviewDate);
+      const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      
+      let wordsToAdd = [];
+      
+      // If the reviewed word has a short interval, add it back to the queue
+      if (nextReviewDate < oneDayFromNow) {
+        wordsToAdd.push(reviewedWord);
+      }
+      
+      // Also check for any other newly due words
+      try {
+        const newlyDueWords = await getNewlyDueWords(sessionStartTime);
+        // Filter out the word we just reviewed to avoid duplicates
+        const otherNewlyDueWords = newlyDueWords.filter(word => word.id !== currentWord.id);
+        wordsToAdd.push(...otherNewlyDueWords);
+      } catch (error) {
+        console.error('Error checking for newly due words:', error);
+      }
+      
+      // Combine remaining words with newly due words
+      const updatedWords = [...remainingWords, ...wordsToAdd];
       setWords(updatedWords);
+      setWordTypeCounts(calculateWordTypeCounts(updatedWords));
 
       // Stop any ongoing speech before moving to next word
       if (await Speech.isSpeakingAsync()) {
@@ -279,13 +346,19 @@ export default function WordViewScreen({ navigation }) {
         setIsSpeaking(false);
       }
 
-      // Move to next word or finish
-      if (currentIndex < words.length - 1) {
-        setCurrentIndex(currentIndex + 1);
+      // Adjust current index since we removed the current word
+      let nextIndex = currentIndex;
+      if (nextIndex >= updatedWords.length) {
+        nextIndex = updatedWords.length - 1;
+      }
+      
+      // If we have words left, continue
+      if (updatedWords.length > 0 && nextIndex >= 0) {
+        setCurrentIndex(nextIndex);
         setShowDefinition(false); // Reset for next word
         setNextIntervals({}); // Reset intervals for next word
       } else {
-        // Finished all words
+        // Truly finished all words (no short intervals)
         Alert.alert(
           'Great Job!',
           'You\'ve reviewed all your vocabulary words for today! 🎉',
@@ -358,6 +431,41 @@ export default function WordViewScreen({ navigation }) {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Word Type Indicator */}
+          <View style={styles.wordTypeIndicator}>
+            <View style={styles.wordTypeRow}>
+              <View style={[styles.wordTypeItem, getCurrentWordType() === 'new' && styles.wordTypeItemActive]}>
+                <View style={[styles.wordTypeDot, styles.wordTypeDotNew]} />
+                <Text style={[styles.wordTypeCount, getCurrentWordType() === 'new' && styles.wordTypeCountActive]}>
+                  {wordTypeCounts.new}
+                </Text>
+                <Text style={[styles.wordTypeLabel, getCurrentWordType() === 'new' && styles.wordTypeLabelActive]}>
+                  New
+                </Text>
+              </View>
+
+              <View style={[styles.wordTypeItem, getCurrentWordType() === 'learning' && styles.wordTypeItemActive]}>
+                <View style={[styles.wordTypeDot, styles.wordTypeDotLearning]} />
+                <Text style={[styles.wordTypeCount, getCurrentWordType() === 'learning' && styles.wordTypeCountActive]}>
+                  {wordTypeCounts.learning}
+                </Text>
+                <Text style={[styles.wordTypeLabel, getCurrentWordType() === 'learning' && styles.wordTypeLabelActive]}>
+                  Learning
+                </Text>
+              </View>
+
+              <View style={[styles.wordTypeItem, getCurrentWordType() === 'review' && styles.wordTypeItemActive]}>
+                <View style={[styles.wordTypeDot, styles.wordTypeDotReview]} />
+                <Text style={[styles.wordTypeCount, getCurrentWordType() === 'review' && styles.wordTypeCountActive]}>
+                  {wordTypeCounts.review}
+                </Text>
+                <Text style={[styles.wordTypeLabel, getCurrentWordType() === 'review' && styles.wordTypeLabelActive]}>
+                  Review
+                </Text>
+              </View>
+            </View>
+          </View>
+
           {/* Mode Indicator */}
           <View style={styles.modeIndicator}>
             <Ionicons 
@@ -794,5 +902,65 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     textAlign: 'center',
     opacity: 0.9,
+  },
+  wordTypeIndicator: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  wordTypeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  wordTypeItem: {
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    minWidth: 80,
+  },
+  wordTypeItemActive: {
+    backgroundColor: '#f8fafc',
+  },
+  wordTypeDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    marginBottom: 6,
+  },
+  wordTypeDotNew: {
+    backgroundColor: '#3b82f6', // Blue for new words
+  },
+  wordTypeDotLearning: {
+    backgroundColor: '#ef4444', // Red for learning words
+  },
+  wordTypeDotReview: {
+    backgroundColor: '#10b981', // Green for review words
+  },
+  wordTypeCount: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#6b7280',
+    marginBottom: 2,
+  },
+  wordTypeCountActive: {
+    color: '#1f2937',
+  },
+  wordTypeLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#9ca3af',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  wordTypeLabelActive: {
+    color: '#374151',
   },
 }); 
