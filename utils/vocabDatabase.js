@@ -206,31 +206,22 @@ export const getDueWords = async (dailyNewWordsLimit = 20) => {
       ORDER BY v.id ASC
     `, [today]);
     
-    // Combine review words and allocated new words
-    let allDueWords = [...reviewWords, ...allocatedNewWords];
+    // Get learning/relearning words (FSRS states 1 or 3) - these should always be available regardless of due time
+    const learningWords = await database.getAllAsync(`
+      SELECT 
+        v.*,
+        f.stability, f.difficulty, f.last_review_date, f.next_review_date,
+        f.review_count, f.last_grade, f.elapsed_days, f.scheduled_days,
+        f.lapses, f.state, f.learning_steps
+      FROM vocabulary v
+      LEFT JOIN fsrs_data f ON v.id = f.word_id
+      WHERE (f.state = 1 OR f.state = 3)
+        AND f.review_count > 0
+      ORDER BY f.next_review_date ASC
+    `, []);
     
-    // If we have no words to review, check for short-interval words (under 1 day)
-    if (allDueWords.length === 0) {
-      const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours from now
-      const oneDayFromNowISO = oneDayFromNow.toISOString();
-      
-      const shortIntervalWords = await database.getAllAsync(`
-        SELECT 
-          v.*,
-          f.stability, f.difficulty, f.last_review_date, f.next_review_date,
-          f.review_count, f.last_grade, f.elapsed_days, f.scheduled_days,
-          f.lapses, f.state, f.learning_steps
-        FROM vocabulary v
-        LEFT JOIN fsrs_data f ON v.id = f.word_id
-        WHERE f.next_review_date > ? 
-          AND f.next_review_date <= ? 
-          AND f.review_count > 0
-        ORDER BY f.next_review_date ASC
-        LIMIT 20
-      `, [nowISO, oneDayFromNowISO]);
-      
-      allDueWords = shortIntervalWords;
-    }
+    // Combine all due words: reviews + allocated new words + learning words
+    let allDueWords = [...reviewWords, ...allocatedNewWords, ...learningWords];
     
     return allDueWords.map(row => formatWordFromRow(row));
   } catch (error) {
@@ -266,10 +257,7 @@ export const getNewlyDueWords = async (sessionStartTime) => {
     const nowISO = now.toISOString();
     const sessionStartISO = sessionStartTime.toISOString();
     
-    // Get words that became due after the session started, or will be due within 1 day
-    const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const oneDayFromNowISO = oneDayFromNow.toISOString();
-    
+    // Get words that became due after the session started
     const newlyDueWords = await database.getAllAsync(`
       SELECT 
         v.*,

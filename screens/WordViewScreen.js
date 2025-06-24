@@ -47,7 +47,7 @@ export default function WordViewScreen({ navigation }) {
     
     // Listen for when screen comes into focus (e.g., returning from settings)
     const unsubscribeFocus = navigation.addListener('focus', () => {
-      loadSettings(); // Reload settings when coming back to this screen
+      loadData(); // Reload both words and settings when coming back to this screen
     });
 
     // Listen for when screen loses focus
@@ -164,21 +164,26 @@ export default function WordViewScreen({ navigation }) {
     }
   };
 
-  // Helper function to determine word type
+  // Helper function to determine word type based on FSRS state
   const getWordType = (word) => {
     if (!word.fsrs || word.fsrs.reviewCount === 0) {
       return 'new';
     }
     
-    // Check if last reviewed today
-    const today = new Date().toISOString().split('T')[0];
-    const lastReviewDate = word.fsrs.lastReviewDate ? word.fsrs.lastReviewDate.split('T')[0] : null;
+    // Use FSRS state to determine word type
+    // State 0: New, State 1: Learning, State 2: Review, State 3: Relearning
+    const fsrsState = word.fsrs.state || 0;
     
-    if (lastReviewDate === today) {
+    if (fsrsState === 1 || fsrsState === 3) {
+      // Learning or Relearning states
       return 'learning';
+    } else if (fsrsState === 2) {
+      // Review state
+      return 'review';
+    } else {
+      // Fallback: check if it's actually new
+      return word.fsrs.reviewCount === 0 ? 'new' : 'review';
     }
-    
-    return 'review';
   };
 
   // Helper function to calculate word type counts
@@ -313,15 +318,11 @@ export default function WordViewScreen({ navigation }) {
       // Remove the current word from the list (it's been reviewed)
       const remainingWords = words.filter((_, index) => index !== currentIndex);
       
-      // Check if the reviewed word should be added back (short interval < 1 day)
-      const now = new Date();
-      const nextReviewDate = new Date(reviewedWord.fsrs.nextReviewDate);
-      const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      
       let wordsToAdd = [];
       
-      // If the reviewed word has a short interval, add it back to the queue
-      if (nextReviewDate < oneDayFromNow) {
+      // If the reviewed word is in learning or relearning state, add it back to the queue
+      const fsrsState = reviewedWord.fsrs.state || 0;
+      if (fsrsState === 1 || fsrsState === 3) {
         wordsToAdd.push(reviewedWord);
       }
       
@@ -415,69 +416,7 @@ export default function WordViewScreen({ navigation }) {
         colors={['#f8fafc', '#e2e8f0', '#cbd5e1']}
         style={styles.gradient}
       >
-        {/* Progress Bar */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressBar}>
-            <View 
-              style={[
-                styles.progressFill, 
-                { width: `${((currentIndex + 1) / words.length) * 100}%` }
-              ]} 
-            />
-          </View>
-          <Text style={styles.progressText}>
-            {currentIndex + 1} / {words.length}
-          </Text>
-        </View>
-
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Word Type Indicator */}
-          <View style={styles.wordTypeIndicator}>
-            <View style={styles.wordTypeRow}>
-              <View style={[styles.wordTypeItem, getCurrentWordType() === 'new' && styles.wordTypeItemActive]}>
-                <View style={[styles.wordTypeDot, styles.wordTypeDotNew]} />
-                <Text style={[styles.wordTypeCount, getCurrentWordType() === 'new' && styles.wordTypeCountActive]}>
-                  {wordTypeCounts.new}
-                </Text>
-                <Text style={[styles.wordTypeLabel, getCurrentWordType() === 'new' && styles.wordTypeLabelActive]}>
-                  New
-                </Text>
-              </View>
-
-              <View style={[styles.wordTypeItem, getCurrentWordType() === 'learning' && styles.wordTypeItemActive]}>
-                <View style={[styles.wordTypeDot, styles.wordTypeDotLearning]} />
-                <Text style={[styles.wordTypeCount, getCurrentWordType() === 'learning' && styles.wordTypeCountActive]}>
-                  {wordTypeCounts.learning}
-                </Text>
-                <Text style={[styles.wordTypeLabel, getCurrentWordType() === 'learning' && styles.wordTypeLabelActive]}>
-                  Learning
-                </Text>
-              </View>
-
-              <View style={[styles.wordTypeItem, getCurrentWordType() === 'review' && styles.wordTypeItemActive]}>
-                <View style={[styles.wordTypeDot, styles.wordTypeDotReview]} />
-                <Text style={[styles.wordTypeCount, getCurrentWordType() === 'review' && styles.wordTypeCountActive]}>
-                  {wordTypeCounts.review}
-                </Text>
-                <Text style={[styles.wordTypeLabel, getCurrentWordType() === 'review' && styles.wordTypeLabelActive]}>
-                  Review
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Mode Indicator */}
-          <View style={styles.modeIndicator}>
-            <Ionicons 
-              name={currentMode === 'humorous' ? 'happy' : 'school'} 
-              size={20} 
-              color="#6366f1" 
-            />
-            <Text style={styles.modeText}>
-              {currentMode === 'humorous' ? 'Humorous Mode' : 'Formal Mode'}
-            </Text>
-          </View>
-
+                <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Word Card */}
           <View style={styles.wordCard}>
             {/* Word Header */}
@@ -622,6 +561,47 @@ export default function WordViewScreen({ navigation }) {
             )}
           </View>
         </ScrollView>
+
+        {/* Word Type Indicator - Fixed at Bottom */}
+        <View style={[styles.bottomWordTypeIndicator, showDefinition && styles.bottomWordTypeIndicatorCompact]}>
+          <View style={styles.wordTypeRow}>
+            <View style={[styles.wordTypeItem, showDefinition && styles.wordTypeItemCompact, getCurrentWordType() === 'new' && styles.wordTypeItemActive]}>
+              <View style={[styles.wordTypeDot, styles.wordTypeDotNew, showDefinition && styles.wordTypeDotCompact]} />
+              <Text style={[styles.wordTypeCount, showDefinition && styles.wordTypeCountCompact, getCurrentWordType() === 'new' && styles.wordTypeCountActive]}>
+                {wordTypeCounts.new}
+              </Text>
+              {!showDefinition && (
+                <Text style={[styles.wordTypeLabel, getCurrentWordType() === 'new' && styles.wordTypeLabelActive]}>
+                  New
+                </Text>
+              )}
+            </View>
+
+            <View style={[styles.wordTypeItem, showDefinition && styles.wordTypeItemCompact, getCurrentWordType() === 'learning' && styles.wordTypeItemActive]}>
+              <View style={[styles.wordTypeDot, styles.wordTypeDotLearning, showDefinition && styles.wordTypeDotCompact]} />
+              <Text style={[styles.wordTypeCount, showDefinition && styles.wordTypeCountCompact, getCurrentWordType() === 'learning' && styles.wordTypeCountActive]}>
+                {wordTypeCounts.learning}
+              </Text>
+              {!showDefinition && (
+                <Text style={[styles.wordTypeLabel, getCurrentWordType() === 'learning' && styles.wordTypeLabelActive]}>
+                  Learning
+                </Text>
+              )}
+            </View>
+
+            <View style={[styles.wordTypeItem, showDefinition && styles.wordTypeItemCompact, getCurrentWordType() === 'review' && styles.wordTypeItemActive]}>
+              <View style={[styles.wordTypeDot, styles.wordTypeDotReview, showDefinition && styles.wordTypeDotCompact]} />
+              <Text style={[styles.wordTypeCount, showDefinition && styles.wordTypeCountCompact, getCurrentWordType() === 'review' && styles.wordTypeCountActive]}>
+                {wordTypeCounts.review}
+              </Text>
+              {!showDefinition && (
+                <Text style={[styles.wordTypeLabel, getCurrentWordType() === 'review' && styles.wordTypeLabelActive]}>
+                  Reviewing
+                </Text>
+              )}
+            </View>
+          </View>
+        </View>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -660,51 +640,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
   },
-  progressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: 'white',
-  },
-  progressBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: '#e2e8f0',
-    borderRadius: 4,
-    marginRight: 12,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#6366f1',
-    borderRadius: 4,
-  },
-  progressText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#64748b',
-  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 20,
     paddingBottom: 30,
-  },
-  modeIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginTop: 16,
-    alignSelf: 'center',
-  },
-  modeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6366f1',
-    marginLeft: 6,
   },
   wordCard: {
     backgroundColor: 'white',
@@ -903,16 +842,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.9,
   },
-  wordTypeIndicator: {
+  bottomWordTypeIndicator: {
     backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    elevation: 3,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+  },
+  bottomWordTypeIndicatorCompact: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   wordTypeRow: {
     flexDirection: 'row',
@@ -921,19 +865,30 @@ const styles = StyleSheet.create({
   },
   wordTypeItem: {
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    minWidth: 80,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+    minWidth: 60,
+  },
+  wordTypeItemCompact: {
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    minWidth: 40,
   },
   wordTypeItemActive: {
     backgroundColor: '#f8fafc',
   },
   wordTypeDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    marginBottom: 6,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  wordTypeDotCompact: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginBottom: 2,
   },
   wordTypeDotNew: {
     backgroundColor: '#3b82f6', // Blue for new words
@@ -945,20 +900,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#10b981', // Green for review words
   },
   wordTypeCount: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#6b7280',
-    marginBottom: 2,
+    marginBottom: 1,
+  },
+  wordTypeCountCompact: {
+    fontSize: 12,
+    marginBottom: 0,
   },
   wordTypeCountActive: {
     color: '#1f2937',
   },
   wordTypeLabel: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
     color: '#9ca3af',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   wordTypeLabelActive: {
     color: '#374151',

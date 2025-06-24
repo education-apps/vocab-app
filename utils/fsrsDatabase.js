@@ -105,8 +105,12 @@ export const getUserProgress = async (dailyNewWordsLimit = 20) => {
       SELECT 
         -- Count scheduled review words (no limit)
         SUM(CASE WHEN f.next_review_date <= ? AND f.review_count > 0 THEN 1 ELSE 0 END) as scheduled_reviews,
-        -- Count total new words available
-        SUM(CASE WHEN (f.next_review_date IS NULL OR f.review_count = 0) THEN 1 ELSE 0 END) as total_new_words
+        -- Count total new words available (state 0 or no reviews)
+        SUM(CASE WHEN (f.state = 0 OR f.state IS NULL OR f.review_count = 0) THEN 1 ELSE 0 END) as total_new_words,
+        -- Count words in learning states
+        SUM(CASE WHEN (f.state = 1 OR f.state = 3) THEN 1 ELSE 0 END) as learning_words,
+        -- Count words in review state
+        SUM(CASE WHEN f.state = 2 THEN 1 ELSE 0 END) as review_words
       FROM vocabulary v
       LEFT JOIN fsrs_data f ON v.id = f.word_id
     `, [nowISO]);
@@ -124,6 +128,8 @@ export const getUserProgress = async (dailyNewWordsLimit = 20) => {
     const scheduledReviews = dueStatsQuery?.scheduled_reviews || 0;
     const allocatedNewWords = allocatedNewWordsQuery?.count || 0;
     const totalNewWords = dueStatsQuery?.total_new_words || 0;
+    const learningWords = dueStatsQuery?.learning_words || 0;
+    const reviewWords = dueStatsQuery?.review_words || 0;
     const dueToday = scheduledReviews + allocatedNewWords;
     
     if (stats) {
@@ -153,7 +159,9 @@ export const getUserProgress = async (dailyNewWordsLimit = 20) => {
         // Additional info for debugging/display
         scheduledReviews: scheduledReviews,
         allocatedNewWords: allocatedNewWords,
-        totalNewWords: totalNewWords
+        totalNewWords: totalNewWords,
+        learningWords: learningWords,
+        reviewWords: reviewWords
       };
     } else {
       return {
