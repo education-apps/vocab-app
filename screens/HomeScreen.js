@@ -11,10 +11,12 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { getUserProgressWithSettings } from '../utils/storage';
+import { useReset } from '../utils/ResetContext';
 
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }) {
+  const { needsHomeReset } = useReset();
   const [progress, setProgress] = useState({
     totalWords: 0,
     dueToday: 0,
@@ -34,6 +36,11 @@ export default function HomeScreen({ navigation }) {
     };
 
     const unsubscribe = navigation.addListener('focus', () => {
+      // Skip reload if this is a forced navigation after reset to prevent double allocation
+      if (needsHomeReset) {
+        return;
+      }
+      
       loadProgress();
     });
 

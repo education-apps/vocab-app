@@ -12,8 +12,10 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { getSettings, updateSettings, resetToFreshISEEVocabulary } from '../utils/storage';
+import { useReset } from '../utils/ResetContext';
 
 export default function SettingsScreen() {
+  const { triggerHomeReset } = useReset();
   const [settings, setSettings] = useState({
     imageMood: 'humorous',
     vocabularySet: 'general',
@@ -146,7 +148,7 @@ export default function SettingsScreen() {
   const handleResetProgress = () => {
     Alert.alert(
       'Reset Learning Progress',
-      'Are you sure you want to reset all your learning progress? This will:\n\n• Clear all review history\n• Reset word difficulty ratings\n• Remove all learning streaks\n• Start fresh with ISEE vocabulary\n\nThis action cannot be undone.',
+      'WARNING: This will permanently delete all your learning progress, settings, and data. This action cannot be undone!',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -154,7 +156,7 @@ export default function SettingsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await resetToFreshISEEVocabulary();
+              await resetToFreshISEEVocabulary(triggerHomeReset);
               Alert.alert(
                 'Progress Reset',
                 'Your learning progress has been successfully reset. You can now start fresh with the ISEE vocabulary!',
@@ -393,7 +395,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 4,
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
@@ -401,6 +404,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    marginRight: 16,
   },
   settingIcon: {
     width: 48,

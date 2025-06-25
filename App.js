@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ResetProvider, useReset } from './utils/ResetContext';
 
 // Import screens
 import HomeScreen from './screens/HomeScreen';
@@ -20,7 +21,7 @@ const Stack = createStackNavigator();
 // Stack navigator for Home and Word View
 function HomeStack() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator initialRouteName="Home">
       <Stack.Screen 
         name="Home" 
         component={HomeScreen} 
@@ -39,6 +40,8 @@ function HomeStack() {
 }
 
 function TabNavigator() {
+  const { needsHomeReset, clearHomeReset } = useReset();
+  
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -64,6 +67,14 @@ function TabNavigator() {
         name="HomeStack" 
         component={HomeStack} 
         options={{ title: 'Home' }}
+        listeners={({ navigation }) => ({
+          focus: (e) => {
+            if (needsHomeReset) {
+              navigation.navigate('HomeStack', { screen: 'Home' });
+              clearHomeReset();
+            }
+          },
+        })}
       />
       <Tab.Screen name="Progress" component={ProgressScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
@@ -79,9 +90,11 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <TabNavigator />
-      </NavigationContainer>
+      <ResetProvider>
+        <NavigationContainer initialState={undefined}>
+          <TabNavigator />
+        </NavigationContainer>
+      </ResetProvider>
     </SafeAreaProvider>
   );
 }

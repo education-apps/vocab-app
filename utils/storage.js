@@ -50,11 +50,17 @@ export const initializeVocabularyData = async () => {
 };
 
 // Reset all progress and reload fresh ISEE vocabulary (can be called manually)
-export const resetToFreshISEEVocabulary = async () => {
+export const resetToFreshISEEVocabulary = async (triggerHomeReset = null) => {
   try {
     console.log('Resetting to fresh ISEE vocabulary...');
     await clearAllData();
     await loadVocabularyData();
+    
+    // Trigger home reset if callback provided
+    if (triggerHomeReset) {
+      triggerHomeReset();
+    }
+    
     console.log('Successfully reset to fresh ISEE vocabulary');
     return true;
   } catch (error) {
