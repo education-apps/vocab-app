@@ -277,4 +277,66 @@ export const getNewlyDueWords = async (sessionStartTime) => {
     console.error('Error getting newly due words:', error);
     return [];
   }
+};
+
+// Get recent words (words reviewed in the last 24 hours)
+export const getRecentWords = async (limit = null) => {
+  try {
+    const database = await db;
+    
+    // Calculate 24 hours ago
+    const twentyFourHoursAgo = new Date();
+    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    const twentyFourHoursAgoISO = twentyFourHoursAgo.toISOString();
+    
+    const rows = await database.getAllAsync(`
+      SELECT 
+        v.*,
+        f.stability, f.difficulty, f.last_review_date, f.next_review_date,
+        f.review_count, f.last_grade, f.elapsed_days, f.scheduled_days,
+        f.lapses, f.state, f.learning_steps
+      FROM vocabulary v
+      INNER JOIN fsrs_data f ON v.id = f.word_id
+      WHERE f.last_review_date IS NOT NULL
+        AND f.last_review_date >= ?
+      ORDER BY f.last_review_date DESC
+      ${limit ? 'LIMIT ?' : ''}
+    `, limit ? [twentyFourHoursAgoISO, limit] : [twentyFourHoursAgoISO]);
+    
+    return rows.map(row => formatWordFromRow(row));
+  } catch (error) {
+    console.error('Error getting recent words:', error);
+    throw error;
+  }
+};
+
+// Get most difficult words (based on FSRS difficulty and performance metrics)
+export const getMostDifficultWords = async (limit = 50) => {
+  try {
+    const database = await db;
+    const rows = await database.getAllAsync(`
+      SELECT 
+        v.*,
+        f.stability, f.difficulty, f.last_review_date, f.next_review_date,
+        f.review_count, f.last_grade, f.elapsed_days, f.scheduled_days,
+        f.lapses, f.state, f.learning_steps,
+        -- Calculate difficulty score based on multiple factors
+        (
+          COALESCE(f.difficulty, 5.0) * 2.0 +  -- FSRS difficulty (higher = more difficult)
+          COALESCE(f.lapses, 0) * 1.5 +        -- Number of lapses (forgot the word)
+          CASE WHEN f.last_grade <= 2 THEN 2.0 ELSE 0.0 END + -- Recent poor performance
+          CASE WHEN f.stability < 1.0 THEN 1.0 ELSE 0.0 END   -- Low stability
+        ) as difficulty_score
+      FROM vocabulary v
+      INNER JOIN fsrs_data f ON v.id = f.word_id
+      WHERE f.review_count > 0  -- Only include words that have been reviewed
+      ORDER BY difficulty_score DESC, f.lapses DESC, f.difficulty DESC
+      LIMIT ?
+    `, [limit]);
+    
+    return rows.map(row => formatWordFromRow(row));
+  } catch (error) {
+    console.error('Error getting most difficult words:', error);
+    throw error;
+  }
 }; 

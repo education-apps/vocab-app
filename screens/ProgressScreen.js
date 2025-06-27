@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { getUserProgressWithSettings, getRecentWords } from '../utils/storage';
+import { getUserProgressWithSettings } from '../utils/storage';
 
 export default function ProgressScreen({ navigation }) {
   const [progress, setProgress] = useState({
@@ -25,7 +25,6 @@ export default function ProgressScreen({ navigation }) {
     scheduledReviews: 0,
     allocatedNewWords: 0,
   });
-  const [recentWords, setRecentWords] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -40,12 +39,8 @@ export default function ProgressScreen({ navigation }) {
 
   const loadData = async () => {
     try {
-      const [progressData, recentWordsData] = await Promise.all([
-        getUserProgressWithSettings(),
-        getRecentWords(),
-      ]);
+      const progressData = await getUserProgressWithSettings();
       setProgress(progressData);
-      setRecentWords(recentWordsData);
     } catch (error) {
       console.error('Error loading progress data:', error);
     }
@@ -57,25 +52,7 @@ export default function ProgressScreen({ navigation }) {
     setRefreshing(false);
   };
 
-  const getGradeColor = (grade) => {
-    switch(grade) {
-      case 1: return '#ef4444'; // Forgot - Red
-      case 2: return '#f59e0b'; // Hard - Orange  
-      case 3: return '#10b981'; // Good - Green
-      case 4: return '#06b6d4'; // Easy - Blue
-      default: return '#6b7280'; // Unknown - Gray
-    }
-  };
 
-  const getGradeText = (grade) => {
-    switch(grade) {
-      case 1: return 'Forgot';
-      case 2: return 'Hard';
-      case 3: return 'Good'; 
-      case 4: return 'Easy';
-      default: return 'Not reviewed';
-    }
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -215,46 +192,37 @@ export default function ProgressScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Recent Words */}
+        {/* Word Lists */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Words</Text>
+          <Text style={styles.sectionTitle}>Word Lists</Text>
+          <Text style={styles.sectionSubtitle}>Explore your vocabulary by category</Text>
           
-          {recentWords.length > 0 ? (
-            <View style={styles.recentWordsContainer}>
-              {recentWords.map((word) => (
-                <View key={word.id} style={styles.recentWordCard}>
-                  <View style={styles.recentWordHeader}>
-                    <Text style={styles.recentWordText}>{word.word}</Text>
-                    <View style={[
-                      styles.recentWordStatus,
-                      { backgroundColor: getGradeColor(word.fsrs?.lastGrade || 0) }
-                    ]}>
-                      <Text style={styles.recentWordStatusText}>
-                        {getGradeText(word.fsrs?.lastGrade || 0)}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text style={styles.recentWordDefinition}>
-                    {word.definition}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="book-outline" size={48} color="#94a3b8" />
-              <Text style={styles.emptyStateText}>
-                No recent activity yet. Start learning some words!
-              </Text>
-              <TouchableOpacity
-                style={styles.startLearningButton}
-                onPress={() => navigation.navigate('HomeStack', { screen: 'WordView' })}
-              >
-                <Text style={styles.startLearningButtonText}>Start Learning</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          <View style={styles.wordListsGrid}>
+            <TouchableOpacity 
+              style={[styles.wordListCard, { backgroundColor: '#06b6d4' }]}
+              onPress={() => navigation.navigate('RecentWords')}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="time" size={32} color="white" />
+              <Text style={styles.wordListTitle}>Recent Words</Text>
+              <Text style={styles.wordListDescription}>Recently reviewed words</Text>
+              <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.8)" />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.wordListCard, { backgroundColor: '#ef4444' }]}
+              onPress={() => navigation.navigate('MostDifficultWords')}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="warning" size={32} color="white" />
+              <Text style={styles.wordListTitle}>Most Difficult</Text>
+              <Text style={styles.wordListDescription}>Words needing practice</Text>
+              <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.8)" />
+            </TouchableOpacity>
+          </View>
         </View>
+
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -375,65 +343,7 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     textAlign: 'center',
   },
-  recentWordsContainer: {
-    marginTop: 8,
-  },
-  recentWordCard: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  recentWordHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  recentWordText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-    flex: 1,
-  },
-  recentWordStatus: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 16,
-  },
-  recentWordStatusText: {
-    fontSize: 12,
-    color: 'white',
-    fontWeight: '600',
-  },
-  recentWordDefinition: {
-    fontSize: 14,
-    color: '#6b7280',
-    lineHeight: 20,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 32,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    marginVertical: 16,
-    lineHeight: 24,
-  },
-  startLearningButton: {
-    backgroundColor: '#6366f1',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  startLearningButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'white',
-  },
+
   todayBreakdownGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -456,5 +366,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6b7280',
     textAlign: 'center',
+  },
+  wordListsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  wordListCard: {
+    flex: 1,
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 140,
+  },
+  wordListTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+    marginTop: 12,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  wordListDescription: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
+    marginBottom: 12,
   },
 }); 

@@ -182,60 +182,6 @@ export const getUserProgress = async (dailyNewWordsLimit = 20) => {
   }
 };
 
-// Get recent words (last reviewed words)
-export const getRecentWords = async (limit = 5) => {
-  try {
-    const database = await db;
-    const rows = await database.getAllAsync(`
-      SELECT 
-        v.*,
-        f.stability, f.difficulty, f.last_review_date, f.next_review_date,
-        f.review_count, f.last_grade, f.elapsed_days, f.scheduled_days,
-        f.lapses, f.state, f.learning_steps
-      FROM vocabulary v
-      INNER JOIN fsrs_data f ON v.id = f.word_id
-      WHERE f.last_review_date IS NOT NULL
-      ORDER BY f.last_review_date DESC
-      LIMIT ?
-    `, [limit]);
-    
-    return rows.map(row => ({
-      id: row.id,
-      word: row.word,
-      partOfSpeech: row.part_of_speech,
-      definition: row.definition,
-      modes: {
-        humorous: {
-          image: row.humorous_image,
-          sentence: row.humorous_sentence,
-          sentence_audio: row.humorous_sentence_audio
-        },
-        formal: {
-          image: row.formal_image,
-          sentence: row.formal_sentence,
-          sentence_audio: row.formal_sentence_audio
-        }
-      },
-      pronunciation_audio: row.pronunciation_audio,
-      definition_audio: row.definition_audio,
-      fsrs: {
-        stability: row.stability,
-        difficulty: row.difficulty,
-        lastReviewDate: row.last_review_date,
-        nextReviewDate: row.next_review_date,
-        reviewCount: row.review_count || 0,
-        lastGrade: row.last_grade,
-        elapsed_days: row.elapsed_days || 0,
-        scheduled_days: row.scheduled_days || 0,
-        lapses: row.lapses || 0,
-        state: row.state || 0,
-        learning_steps: row.learning_steps || 0,
-      }
-    }));
-  } catch (error) {
-    console.error('Error getting recent words:', error);
-    throw error;
-  }
-};
+
 
  

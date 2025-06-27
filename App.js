@@ -11,6 +11,8 @@ import HomeScreen from './screens/HomeScreen';
 import WordViewScreen from './screens/WordViewScreen';
 import ProgressScreen from './screens/ProgressScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import RecentWordsScreen from './screens/RecentWordsScreen';
+import MostDifficultWordsScreen from './screens/MostDifficultWordsScreen';
 
 // Import utilities
 import { initializeVocabularyData, resetToFreshISEEVocabulary } from './utils/storage';
@@ -33,6 +35,37 @@ function HomeStack() {
         options={{ 
           title: 'Learn Words',
           headerBackTitle: 'Home',
+        }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+// Stack navigator for Progress and related screens
+function ProgressStack() {
+  return (
+    <Stack.Navigator initialRouteName="ProgressMain">
+      <Stack.Screen 
+        name="ProgressMain" 
+        component={ProgressScreen} 
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="RecentWords" 
+        component={RecentWordsScreen}
+        options={{ 
+          title: 'Recent Words',
+          headerBackTitle: 'Progress',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen 
+        name="MostDifficultWords" 
+        component={MostDifficultWordsScreen}
+        options={{ 
+          title: 'Most Difficult Words',
+          headerBackTitle: 'Progress',
+          headerShown: false,
         }}
       />
     </Stack.Navigator>
@@ -76,7 +109,7 @@ function TabNavigator() {
           },
         })}
       />
-      <Tab.Screen name="Progress" component={ProgressScreen} />
+      <Tab.Screen name="Progress" component={ProgressStack} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );

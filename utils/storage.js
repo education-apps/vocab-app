@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initializeDatabase, checkVocabularyLoaded, clearAllData } from './database.js';
-import { loadVocabularyData, getWordById, getDueWords, getAllWords, cleanupOldAllocations, getNewlyDueWords } from './vocabDatabase.js';
-import { updateFsrsData, getUserProgress, getRecentWords } from './fsrsDatabase.js';
+import { loadVocabularyData, getWordById, getDueWords, getAllWords, cleanupOldAllocations, getNewlyDueWords, getMostDifficultWords, getRecentWords } from './vocabDatabase.js';
+import { updateFsrsData, getUserProgress } from './fsrsDatabase.js';
 import { processReview } from './fsrs.js';
 
 /*
@@ -94,13 +94,10 @@ export const getDueWordsWithSettings = async () => {
 };
 
 // Export database functions with consistent naming
-export { getUserProgress, getRecentWords };
+export { getUserProgress } from './fsrsDatabase.js';
 
-// Export getWordById from vocabDatabase
-export { getWordById } from './vocabDatabase.js';
-
-// Export newly due words function
-export { getNewlyDueWords } from './vocabDatabase.js';
+// Export vocabulary query functions
+export { getWordById, getRecentWords, getMostDifficultWords, getNewlyDueWords } from './vocabDatabase.js';
 
 // Process FSRS review for a word (stores progress in database)
 export const processFsrsReview = async (wordId, grade) => {
